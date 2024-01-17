@@ -1,0 +1,78 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using Blazored.Modal
+@using Blazored.Modal.Services
+@using DTOClassLibrary.DTO.Memo
+@inherits ComponentBase
+@inject IModalService Modal
+
+
+<div class="modal d-flex align-items-center justify-content-center" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background-color: rgba(0, 0, 0, 0.5);">
+    <div class="modal-content p-4 rounded d-flex flex-column justify-content-center align-items-center" style="background-color: white; width: 50%; height: 50%; overflow: auto;">
+        <EditForm Model="this" class="needs-validation" novalidate>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <InputText id="password" @bind-Value="Memo.Password" type="password" class="form-control" required />
+                    <div class="invalid-feedback">
+                        Please enter a password.
+                    </div>
+                    @if (passwordsMatch == false)
+                    {
+                        <p class="text-danger">Passwords do not match.</p>
+                    }
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password:</label>
+                    <InputText id="confirmPassword" @bind-Value="confirmPassword" type="password" class="form-control" required />
+                    <div class="invalid-feedback">
+                        Please confirm your password.
+                    </div>
+                    @if (passwordsMatch == false)
+                    {
+                        <p class="text-danger">Passwords do not match.</p>
+                    }
+                </div>
+                <div class="form-group form-check">
+                    <InputCheckbox id="acceptTerms" @bind-Value="acceptTerms" class="form-check-input" required />
+                    <label class="form-check-label" for="acceptTerms">I accept the terms and services of the memo</label>
+                    <div class="invalid-feedback">
+                        You must accept the terms and services.
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary" @onclick="Ok" disabled="@(!acceptTerms)">OK</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="Cancel">Cancel</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    string confirmPassword = "";
+    bool acceptTerms = false;
+    bool passwordsMatch = true;
+
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; }
+    [Parameter] public AcceptMemoDTO Memo { get; set; }
+
+    void Ok()
+    {
+        if (Memo.Password != confirmPassword)
+        {
+            passwordsMatch = false;
+        }
+        else
+        {
+            passwordsMatch = true;
+            BlazoredModal.CloseAsync(ModalResult.Ok(Memo));
+        }
+    }
+
+
+    void Cancel()
+    {
+        BlazoredModal.CloseAsync(ModalResult.Cancel());
+    }
+}

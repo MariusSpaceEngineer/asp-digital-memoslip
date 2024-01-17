@@ -1,0 +1,242 @@
+﻿@using DTOClassLibrary.DTO;
+@using DTOClassLibrary.DTO.SalesConfirmation;
+@using DTOClassLibrary.Enums;
+
+@model List<SalesConfirmationDTO>
+
+@{
+    ViewBag.Title = "Sales Confirmations";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
+
+<style>
+    body{
+        background-color: #DDF2FD;
+    }
+</style>
+
+<div class="container mt-4">
+    <div id="feedbackMessage" class="mt-3" style="display:none;"></div>
+
+    <h2>Sales Confirmations</h2>
+
+    @if (Model != null && Model.Any())
+    {
+         <form asp-action="UpdateSalesConfirmations" asp-controller="SalesConfirmation" method="post">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Sales Confirmation #</th>
+                        <th>Created Date</th>
+                        <th>Consignee</th>
+                        <th>Total Sales Price</th>
+                        <th>Commision percentage</th>
+                        <th>Commision to pay</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Id</td>
+                            <td>@item.CreatedDate.ToString("MM/dd/yyyy")</td>
+                            <td>@item.ConsigneeName</td>
+                            <td>$@item.TotalSalesPrice.ToString("0.00")</td>
+                            <td>
+                                <span id="commissionDisplay-@item.Id">@item.SuggestedCommision%</span>
+                                <input type="text" style="display:none;" id="commissionInput-@item.Id" value="@item.SuggestedCommision" />
+
+                                @if (item.SalesConfirmationState == SalesConfirmationState.CREATED || item.SalesConfirmationState == SalesConfirmationState.EDITEDBYCONSIGNEE)
+                                {
+                                    <button type="button" class="btn btn-primary" onclick="editCommission('@item.Id')" id="editButton-@item.Id">Edit</button>
+                                    <button type="button" class="btn btn-success" style="display:none;" onclick="saveCommission('@item.Id')" id="saveButton-@item.Id">Save</button>
+                                }
+                            </td>
+                            <td>@item.CommissionAmount</td>
+                            <td>
+                                @if (item.SalesConfirmationState == SalesConfirmationState.CREATED)
+                                {
+                                    <span class="badge bg-success">new</span>
+                                }
+                                else if (item.SalesConfirmationState == SalesConfirmationState.EDITEDBYCONSIGNEE)
+                                {
+                                    <span class="badge bg-warning text-white">Marked for changes</span>
+                                }
+                                else if (item.SalesConfirmationState == SalesConfirmationState.EDITEDBYCONSIGNER)
+                                {
+                                    <span class="badge bg-success text-white">Sent to consginee</span>
+                                }
+                                else if (item.SalesConfirmationState == SalesConfirmationState.APPROVED)
+                                {
+                                    <span class="badge bg-success text-white">Approved</span>
+                                }
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="6">
+                                <div id="products-@item.Id">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Product ID</th>
+                                                <th>Lot Number</th>
+                                                <th>Sale Price</th>
+                                                <th>Carats Sold</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                                @foreach (var product in item.SoldProducts)
+                                                {
+                                                    <tr>
+                                                        <td>@product.ProductId</td>
+                                                        <td>@product.LotNumber</td>
+                                                    <td id="salePrice-@item.Id-@product.Id">
+                                                            <span>@product.SalePrice.ToString("0.00")</span>
+                                                            <input type="text" style="display:none;" value="@product.SalePrice.ToString("0.00")" />
+                                                        </td>
+                                                        <td>@product.CaratsSold</td>
+                                                    @if (item.SalesConfirmationState == SalesConfirmationState.EDITEDBYCONSIGNEE || item.SalesConfirmationState == SalesConfirmationState.CREATED)
+                                                    {
+                                                        <td id="buttonGroup-@item.Id-@product.Id">
+                                                            <button type="button" class="btn btn-success" onclick="agreeWithPrice('@item.Id','@product.Id','@product.SalePrice')">✔️</button>
+                                                            <button type="button" class="btn btn-danger" onclick="disagreeWithPrice('@item.Id', '@product.Id')">❌</button>
+                                                        </td>
+                                                    }
+                                                </tr>
+
+                                                }
+                                        </tbody>
+                                        @if (item.SalesConfirmationState == SalesConfirmationState.EDITEDBYCONSIGNEE || item.SalesConfirmationState == SalesConfirmationState.CREATED)
+                                        {
+                                            <button type="button" class="btn btn-primary" onclick="confirmDecisions('@item.Id')">Confirm Changes</button>
+
+                                            <button type="button" class="btn btn-info" onclick="ApproveSalesConfirmation('@item.Id')">Approve Sales Confirmation</button>
+                                        }
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </form>
+    }
+    else
+    {
+        <p>No sales confirmations available.</p>
+    }
+
+ 
+
+
+<script>
+    var decisions = {};
+
+    function disagreeWithPrice(itemId, productId) {
+        if (!decisions[itemId]) {
+            decisions[itemId] = {};
+        }
+
+        var salePriceElementId = 'salePrice-' + itemId + '-' + productId;
+        var salePriceElement = document.getElementById(salePriceElementId);
+        var span = salePriceElement.getElementsByTagName('span')[0];
+        var input = salePriceElement.getElementsByTagName('input')[0];
+
+        span.style.display = 'none';
+        input.style.display = '';
+
+        decisions[itemId][productId] = { decision: 'Disagreed', price: input.value };
+
+        input.onchange = function () {
+            decisions[itemId][productId] = { decision: 'CounterPrice', price: this.value };
+        };
+    }
+
+
+    function agreeWithPrice(itemId, productId, productPrice) {
+        if (!decisions[itemId]) {
+            decisions[itemId] = {};
+        }
+
+        var elementId = 'buttonGroup-' + itemId + '-' + productId;
+        var element = document.getElementById(elementId);
+        if (element) {
+            element.style.display = 'none';
+        }
+
+        if (decisions[itemId][productId] && decisions[itemId][productId].decision === 'CounterPrice') {
+            var editedPrice = decisions[itemId][productId].price; 
+            decisions[itemId][productId] = { decision: 'CounterPrice', price: editedPrice };
+        } else {
+            decisions[itemId][productId] = { decision: 'Agreed', price: productPrice };
+        }
+
+        console.log(decisions[itemId]);
+    }
+
+    function confirmDecisions(salesConfirmationId) {
+        var newCommission = document.getElementById('commissionInput-' + salesConfirmationId).value;
+
+        var dataToSend = {
+            SalesConfirmationId: salesConfirmationId,
+            Commision: newCommission,
+            UpdatedProductsSale: decisions[salesConfirmationId]
+        };
+        console.log(dataToSend);
+        $.ajax({
+            type: 'POST',
+            url: 'https://localhost:7245/salesconfirmation/update',
+            data: JSON.stringify(dataToSend),
+            contentType: 'application/json; charset=utf-8',
+            dataType: 'json',
+                success: function (response) {
+                    console.log('Success:', response);
+                    displayFeedback("Success! Sales confirmation updated.", "success");
+                },
+                error: function (error) {
+                    console.error('Error:', error);
+                    displayFeedback("Error: Unable to update sales confirmation.", "danger");
+                }
+        });
+    }
+
+    function saveCommission(itemId) {
+        var newCommission = document.getElementById('commissionInput-' + itemId).value;
+        document.getElementById('commissionDisplay-' + itemId).innerText = newCommission + '%';
+        document.getElementById('commissionInput-' + itemId).style.display = 'none';
+        document.getElementById('commissionDisplay-' + itemId).style.display = '';
+        document.getElementById('editButton-' + itemId).style.display = '';
+        document.getElementById('saveButton-' + itemId).style.display = 'none';
+    }
+
+    function ApproveSalesConfirmation(salesConfirmationId) {
+
+        console.log('Approve ' + salesConfirmationId);
+        $.ajax({
+            type: 'PATCH',
+            url: 'https://localhost:7245/salesconfirmation/approve/' + salesConfirmationId,
+            contentType: 'application/json; charset=utf-8',
+                success: function (response) {
+                    console.log('Success:', response);
+                    displayFeedback("Success! Sales confirmation approved.", "success");
+                },
+                error: function (error) {
+                    console.error('Error:', error);
+                    displayFeedback("Error: Unable to approve sales confirmation.", "danger");
+                }
+        });
+    }
+
+    function editCommission(itemId) {
+        document.getElementById('commissionDisplay-' + itemId).style.display = 'none';
+        document.getElementById('commissionInput-' + itemId).style.display = '';
+        document.getElementById('editButton-' + itemId).style.display = 'none';
+        document.getElementById('saveButton-' + itemId).style.display = '';
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>

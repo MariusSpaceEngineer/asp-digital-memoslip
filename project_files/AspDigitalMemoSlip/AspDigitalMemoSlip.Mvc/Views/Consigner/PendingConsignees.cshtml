@@ -1,0 +1,88 @@
+﻿@{
+    ViewData["Title"] = "Your Pending Consignees";
+}
+
+<h1>Your Pending Consignees</h1>
+
+<div class="button-container">
+    <a href="@Url.Action("GetPendingConsigners")" class="refresh-button">Refresh</a>
+</div>
+
+<div class="list-container">
+    @if (ViewBag.Consignees != null)
+    {
+        @foreach (var consignee in ViewBag.Consignees)
+        {
+            <div class="info-consignee" onclick="location.href='@Url.Action("Details", "Consignee", new { id = consignee.Id })'">
+                <p class="consignee-username">@consignee.UserName</p>
+                <p>Name: @consignee.Name</p>
+                <p>Email: @consignee.Email</p>
+                <p>Phone Number: @consignee.PhoneNumber</p>
+            </div>
+        }
+    }
+</div>
+
+<style>
+    body {
+        background-color: lightblue;
+        font-family: 'Arial', sans-serif;
+    }
+
+    h1 {
+        text-align: center;
+        color: #333;
+    }
+
+    .button-container {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .refresh-button {
+        background-color: #007bff;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.3rem;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+
+        .refresh-button:hover {
+            background-color: #0056b3;
+        }
+
+    .list-container {
+        width: 40vw;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .info-consignee {
+        background-color: white;
+        border: solid 1px #ddd;
+        border-radius: 0.5rem;
+        margin: 1rem;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: box-shadow 0.3s, transform 0.3s;
+    }
+
+        .info-consignee:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .info-consignee p {
+            margin: 0.5rem 0;
+            color: #555;
+        }
+
+    .consignee-username {
+        font-weight: bold;
+        color: #007bff;
+    }
+</style>

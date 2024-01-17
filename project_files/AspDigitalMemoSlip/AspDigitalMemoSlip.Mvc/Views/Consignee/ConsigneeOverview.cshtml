@@ -1,0 +1,127 @@
+﻿@{
+    ViewData["Title"] = "Consignee Overview";
+    var images = ViewBag.Images;
+}
+
+<style>
+    .consignee-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .consignee-table th, .consignee-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .consignee-table th {
+            background-color: blue;
+            color: white;
+        }
+
+        .consignee-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .consignee-table tr:hover {
+            background-color: #ddd;
+        }
+
+    .details-button {
+        background-color: #008CBA;
+        color: white;
+        padding: 6px 12px;
+        margin: 4px 2px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+        .details-button:hover {
+            background-color: #005f73;
+        }
+
+    .details-row {
+        font-style: italic;
+        color: #555;
+    }
+
+    .consignee-details {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .consignee-info {
+        flex: 1;
+    }
+
+    .consignee-image {
+        flex: 0 0 auto;
+        margin-left: 15px;
+    }
+</style>
+
+@if (ViewBag.Consignees != null)
+{
+    <table class="consignee-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var consignee in ViewBag.Consignees)
+            {
+                <tr>
+                    <td>@consignee.Name</td>
+                    <td>
+                        <button class="details-button" onclick="toggleDetails('@consignee.Id')">Show Details</button>
+                    </td>
+                </tr>
+                <tr id="@consignee.Id" class="details-row" style="display:none">
+                    <td colspan="2">
+                        <div class="consignee-details">
+                            <div class="consignee-info">
+                                <div>Email: @consignee.Email</div>
+                                <div>Insurance Coverage: @consignee.InsuranceCoverage</div>
+                                <div>Insurance Number: @consignee.InsuranceNumber</div>
+                                <div>National Registry Number: @consignee.NationalRegistryNumber</div>
+                                <div>Phone Number: @consignee.PhoneNumber</div>
+                                <div>VAT Number: @consignee.VATNumber</div>
+                            </div>
+                            @if (consignee.SelfiePath != null)
+                            {
+                                <div class="consignee-image">
+                                    <img src="@($"data:image/jpeg;base64,{consignee.Images.Selfie}")" alt="Selfie" class="img-fluid" />
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-danger">Selfie not found.</p>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No consignees found.</p>
+}
+
+@section Scripts {
+    <script>
+        function toggleDetails(consigneeId) {
+            var detailsRow = document.getElementById(consigneeId);
+            if (detailsRow.style.display === "none") {
+                detailsRow.style.display = "";
+            } else {
+                detailsRow.style.display = "none";
+            }
+        }
+    </script>
+}

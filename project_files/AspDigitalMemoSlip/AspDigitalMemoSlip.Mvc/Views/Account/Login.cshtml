@@ -1,0 +1,29 @@
+﻿@model DTOClassLibrary.DTO.Authentication.LoginDTO;
+
+<h2>Login</h2>
+
+@using (Html.BeginForm("Login", "Account", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.Username)
+        @Html.TextBoxFor(m => m.Username, new { @class = "form-control" })
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.Password)
+        @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
+    </div>
+    <div class="alert alert-danger text-center" style="margin-top: 0.5rem; display: @(TempData["ErrorMessages"] != null ? "block" : "none");">
+        @if (TempData["ErrorMessages"] != null)
+        {
+            foreach (var errorMessage in (string[])TempData["ErrorMessages"])
+            {
+                @errorMessage <br />
+            }
+        }
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem;">Log in</button>
+}
+

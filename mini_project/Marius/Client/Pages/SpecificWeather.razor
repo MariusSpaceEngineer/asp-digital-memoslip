@@ -1,0 +1,30 @@
+﻿@using Models;
+@inject HttpClient Http
+
+@page "/specificWeather"
+
+<PageTitle>Weather For A Specific Date</PageTitle>
+
+<h1>Weather Forecast</h1>
+
+<p>Select a date to get the weather forecast:</p>
+
+<input type="date" @bind="selectedDate" />
+
+<button class="btn btn-primary" @onclick="GetWeather">Get Weather</button>
+
+@if (forecast != null)
+{
+    <p>The weather on @forecast.Date is @forecast.Summary with a temperature of @forecast.TemperatureC degrees Celsius.</p>
+}
+
+@code {
+    private DateOnly selectedDate = DateOnly.FromDateTime(DateTime.Today);
+    private WeatherForecast forecast;
+
+    private async Task GetWeather()
+    {
+        string formattedDate = selectedDate.ToString("yyyyMMdd");
+        forecast = await Http.GetFromJsonAsync<WeatherForecast>($"WeatherForecast/{formattedDate}");
+    }
+}

@@ -1,0 +1,96 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34031.279
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Backend", "Backend", "{E818FA6B-B7F4-4B12-99EF-6E7913B7988A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Frontend (Presentation)", "Frontend (Presentation)", "{6F8F620A-BCE4-47E0-99EF-5BD7FA02AADF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspDigitalMemoSlip.Api", "AspDigitalMemoSlip.Api\AspDigitalMemoSlip.Api.csproj", "{0CD3ED2F-BDDA-41D5-9825-38313ABAAA08}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A032F18C-80B0-48F7-B2AB-7A8CD4326BCA} = {A032F18C-80B0-48F7-B2AB-7A8CD4326BCA}
+		{A14B05DB-EF97-41DF-96B4-D27D7CFD3447} = {A14B05DB-EF97-41DF-96B4-D27D7CFD3447}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspDigitalMemoSlip.Mvc", "AspDigitalMemoSlip.Mvc\AspDigitalMemoSlip.Mvc.csproj", "{36AF3E61-221B-4C98-865D-12463C314412}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspDigitalMemoSlip.Blazor", "AspDigitalMemoSlip.Blazor\AspDigitalMemoSlip.Blazor.csproj", "{EA9ED0BE-786E-499C-A230-49E644EBC633}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ApplicationCore", "ApplicationCore", "{D2104E85-E6AF-4649-8A8C-57A88A932C02}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspDigitalMemoSlip.Application", "AspDigitalMemoSlip.Application\AspDigitalMemoSlip.Application.csproj", "{A032F18C-80B0-48F7-B2AB-7A8CD4326BCA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{70577C21-C9E1-4CF2-905B-F3469492926A} = {70577C21-C9E1-4CF2-905B-F3469492926A}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{2F7061D8-C38D-485A-A172-AA852576A79D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspDigitalMemoSlip.Infrastructure", "AspDigitalMemoSlip.Infrastructure\AspDigitalMemoSlip.Infrastructure.csproj", "{A14B05DB-EF97-41DF-96B4-D27D7CFD3447}"
+	ProjectSection(ProjectDependencies) = postProject
+		{70577C21-C9E1-4CF2-905B-F3469492926A} = {70577C21-C9E1-4CF2-905B-F3469492926A}
+		{A032F18C-80B0-48F7-B2AB-7A8CD4326BCA} = {A032F18C-80B0-48F7-B2AB-7A8CD4326BCA}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspDigitalMemoSlip.Domain", "AspDigitalMemoSlip.Domain\AspDigitalMemoSlip.Domain.csproj", "{70577C21-C9E1-4CF2-905B-F3469492926A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DTOClassLibrary", "DTOClassLibrary\DTOClassLibrary.csproj", "{6776597F-53C5-4880-9F4F-50D79BD48697}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspDigitalMemoSlip.Test", "AspDigitalMemoSlip.Test\AspDigitalMemoSlip.Test.csproj", "{D85C0F84-3127-4939-B62F-6CAF3AB068C8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0CD3ED2F-BDDA-41D5-9825-38313ABAAA08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CD3ED2F-BDDA-41D5-9825-38313ABAAA08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CD3ED2F-BDDA-41D5-9825-38313ABAAA08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CD3ED2F-BDDA-41D5-9825-38313ABAAA08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{36AF3E61-221B-4C98-865D-12463C314412}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{36AF3E61-221B-4C98-865D-12463C314412}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{36AF3E61-221B-4C98-865D-12463C314412}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{36AF3E61-221B-4C98-865D-12463C314412}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA9ED0BE-786E-499C-A230-49E644EBC633}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA9ED0BE-786E-499C-A230-49E644EBC633}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA9ED0BE-786E-499C-A230-49E644EBC633}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA9ED0BE-786E-499C-A230-49E644EBC633}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A032F18C-80B0-48F7-B2AB-7A8CD4326BCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A032F18C-80B0-48F7-B2AB-7A8CD4326BCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A032F18C-80B0-48F7-B2AB-7A8CD4326BCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A032F18C-80B0-48F7-B2AB-7A8CD4326BCA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A14B05DB-EF97-41DF-96B4-D27D7CFD3447}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A14B05DB-EF97-41DF-96B4-D27D7CFD3447}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A14B05DB-EF97-41DF-96B4-D27D7CFD3447}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A14B05DB-EF97-41DF-96B4-D27D7CFD3447}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70577C21-C9E1-4CF2-905B-F3469492926A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70577C21-C9E1-4CF2-905B-F3469492926A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70577C21-C9E1-4CF2-905B-F3469492926A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70577C21-C9E1-4CF2-905B-F3469492926A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6776597F-53C5-4880-9F4F-50D79BD48697}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6776597F-53C5-4880-9F4F-50D79BD48697}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6776597F-53C5-4880-9F4F-50D79BD48697}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6776597F-53C5-4880-9F4F-50D79BD48697}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D85C0F84-3127-4939-B62F-6CAF3AB068C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D85C0F84-3127-4939-B62F-6CAF3AB068C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D85C0F84-3127-4939-B62F-6CAF3AB068C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D85C0F84-3127-4939-B62F-6CAF3AB068C8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0CD3ED2F-BDDA-41D5-9825-38313ABAAA08} = {6F8F620A-BCE4-47E0-99EF-5BD7FA02AADF}
+		{36AF3E61-221B-4C98-865D-12463C314412} = {6F8F620A-BCE4-47E0-99EF-5BD7FA02AADF}
+		{EA9ED0BE-786E-499C-A230-49E644EBC633} = {6F8F620A-BCE4-47E0-99EF-5BD7FA02AADF}
+		{D2104E85-E6AF-4649-8A8C-57A88A932C02} = {E818FA6B-B7F4-4B12-99EF-6E7913B7988A}
+		{A032F18C-80B0-48F7-B2AB-7A8CD4326BCA} = {D2104E85-E6AF-4649-8A8C-57A88A932C02}
+		{2F7061D8-C38D-485A-A172-AA852576A79D} = {E818FA6B-B7F4-4B12-99EF-6E7913B7988A}
+		{A14B05DB-EF97-41DF-96B4-D27D7CFD3447} = {2F7061D8-C38D-485A-A172-AA852576A79D}
+		{70577C21-C9E1-4CF2-905B-F3469492926A} = {D2104E85-E6AF-4649-8A8C-57A88A932C02}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FF16BEDD-BDB7-456A-9226-2C8E23B8E369}
+	EndGlobalSection
+EndGlobal

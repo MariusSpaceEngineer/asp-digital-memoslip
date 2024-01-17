@@ -1,0 +1,282 @@
+﻿@page "/memo/{id}"
+@using DTOClassLibrary.DTO.Product;
+@using Microsoft.AspNetCore.Authorization
+@using DTOClassLibrary.DTO.Memo
+@inject HttpClient Client
+@attribute [Authorize]
+@using System.Text.Json;
+
+
+<AuthorizeView>
+    <Authorized>
+<div class="container mt-4">
+    <h3 class="mb-4">Memo Details</h3>
+    @if (memo != null)
+    {
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4 class="card-title">Memo Information</h4>
+                <dl class="row">
+                    <dt class="col-sm-3">ID:</dt>
+                    <dd class="col-sm-9">@memo.Id</dd>
+
+                    <dt class="col-sm-3">Consigner:</dt>
+                    <dd class="col-sm-9">@memo.Consigner.Name</dd>
+
+                    <dt class="col-sm-3">Consignee:</dt>
+                    <dd class="col-sm-9">@memo.Consignee.Name</dd>
+
+                    <dt class="col-sm-3">Create Date:</dt>
+                    <dd class="col-sm-9">@memo.CreateDate.ToString("MMMM dd, yyyy")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Products</h4>
+
+                @if (memo.Products.Any())
+                {
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Lot Number</th>
+                                <th>Description</th>
+                                <th>Carat</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in @memo.Products)
+                            {
+                                <tr>
+                                    
+                                    <td>@item.LotNumber</td>
+                                    <td>@item.Description</td>
+                                    <td>@item.Carat</td>
+                                    <th>@item.Price</th>
+                                    <!--check if there is state is else than normal (lost,returned,stolen)-->
+                                    @if (item.State != 0)
+                                    {
+                                    <td>
+                                        <i class="bi bi-info-circle-fill">opmerking geplaatst</i>
+                                    </td>
+                                    }
+                                    else
+                                    {
+                                    <td>
+                                        <button @onclick="() => SetSelectedProductId(item.ID)" type="button" class="btn btn-primary" data-toggle="modal" data-target="#changestatemodel">
+                                            Opmerking
+                                        </button>
+                                    </td>
+                                    }
+                                  
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p>Deze memo bevat geen producten</p>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <p class="alert alert-warning">Geen memo gevonden</p>
+    }
+
+    <div class="modal fade" id="changestatemodel" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Opmerking toevoegen</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="STOLEN" @onchange="() => UpdateProductState(ProductState.Stolen)">
+                        <label class="form-check-label" for="inlineCheckbox1">Het product is gestolen</label>
+                        <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="RETURNED" @onchange="() => UpdateProductState(ProductState.Returned)">
+                        <label class="form-check-label" for="inlineCheckbox1">Het product is teruggestuurd</label>
+                        <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="LOST" @onchange="() => UpdateProductState(ProductState.Lost)">
+                        <label class="form-check-label" for="inlineCheckbox1">Het product is verloren</label>
+                    </div>
+                </div>
+                <p class="warning">
+                    @{
+                        switch (State)
+                        {
+                            case ProductState.Stolen:
+                                <text>Dit product wordt gemarkeerd als gestolen. Bent u zeker?</text>
+                                ;
+                                break;
+                            case ProductState.Returned:
+                                <text>Dit product wordt gemarkeerd als teruggestuurd. Bent u zeker?</text>
+                                ;
+                                break;
+                            case ProductState.Lost:
+                                <text>Dit product wordt gemarkeerd als verloren. Bent u zeker?</text>
+                                ;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                </p>
+                <div class="form-group">
+                    <label for="exampleFormControlTextarea1">(optioneel) Opmerking</label>
+                    <textarea @bind ="remarkDes" class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="() => SetSelectedProductId(0)" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    @if (State != ProductState.None)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="() => UpdateProductStateBackend()" data-toggle="modal" data-target="#changestatemodel">Bevestig verandering</button>
+                    }
+                </div>
+               
+            </div>
+        </div>
+    </div>
+</div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center">
+            <p class="text-danger" style="font-size: 1.5rem;">Unauthorized. Please log in.</p>
+            <div class="button">
+                <a class="btn btn-primary btn-lg" href="/login">Login</a>
+            </div>
+        </div>
+
+    </NotAuthorized>
+</AuthorizeView>
+<style>
+    .container {
+        max-width: 600px;
+        margin: auto;
+        text-align: center;
+    }
+
+    h3 {
+        color: #333;
+    }
+
+    table{
+        margin:auto;
+    }
+
+    .hover-button{
+        display:none;
+    }
+
+    tr:hover .hover-button{
+        display : block;
+    }
+
+    .warning{
+        color:red;
+        font-weight : bold;
+    }
+</style>
+
+@code {
+    private enum ProductState
+    {
+        None = 0, Lost, Stolen, Returned
+    }
+
+    [Parameter]
+    public string? id { get; set; }
+    private string memoUrl = "https://localhost:7001/api/Memo/products/";
+    private string updateProductUrlState = "https://localhost:7001/api/Product/products/";
+    private ProductState State = ProductState.None;
+
+    private bool checkboxState = false;
+    private int selectedProductId = 0;
+    private bool succesStateChange = false;
+    private string remarkDes = "";
+
+    private MemoDTO? memo = null;
+
+    private void UpdateProductState(ProductState state)
+    {
+        State = state;
+    }
+
+    private void SetSelectedProductId(int productId)
+    {
+        this.selectedProductId = productId;
+    }
+
+    private async Task UpdateProductStateBackend()
+    {
+        try
+        {
+            var data = new
+            {
+                productState = State,
+                remark = remarkDes
+            };
+
+            var response = await Client.PutAsJsonAsync(updateProductUrlState + selectedProductId, data);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var contentString = await response.Content.ReadAsStringAsync();
+                Console.WriteLine(contentString);
+
+                var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    };
+
+                ProductDTO newProduct = JsonSerializer.Deserialize<ProductDTO>(contentString, options);
+                Console.WriteLine(newProduct.ID);
+                Console.WriteLine($"Memo Products Before Update: {JsonSerializer.Serialize(memo.Products)}");
+
+                Console.WriteLine($"newProduc: {JsonSerializer.Serialize(newProduct)}");
+
+                var updatedProducts = new List<ProductDTO>(memo.Products);
+
+                Console.WriteLine(updatedProducts);
+                int indexOldProduct = memo.Products.FindIndex(p => p.ID == newProduct?.ID + 1);
+
+                updatedProducts[indexOldProduct] = newProduct;
+                memo.Products = updatedProducts;
+                Console.WriteLine($"updatedProducts: {JsonSerializer.Serialize(updatedProducts)}");
+
+
+
+                StateHasChanged();
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Niet gelukt om product status te veranderen: {e.Message}");
+        }
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        base.OnInitialized();
+
+        try
+        {
+            memo = await Client.GetFromJsonAsync<MemoDTO>(memoUrl + id);
+            foreach (var item in memo.Products)
+            {
+                Console.WriteLine(item);
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+}

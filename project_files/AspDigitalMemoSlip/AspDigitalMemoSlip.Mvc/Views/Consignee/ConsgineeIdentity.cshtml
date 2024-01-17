@@ -1,0 +1,18 @@
+﻿
+@{
+}
+
+
+
+<body>
+    <h2>Image from Database</h2>
+
+    @if (ViewBag.ImageData != null)
+    {
+        <img src="data:image/jpeg;base64,@ViewBag.ImageData" alt="" />
+    }
+    else
+    {
+        <p>Geen foto beschikbaar</p>
+    }
+</body>

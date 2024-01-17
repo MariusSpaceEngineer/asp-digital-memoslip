@@ -1,0 +1,128 @@
+﻿@page "/"
+@page "/home"
+@using DTOClassLibrary.DTO.Memo
+@using Microsoft.AspNetCore.Authorization
+@inject HttpClient Http
+@inject NavigationManager navigationManager
+@attribute [Authorize]
+
+<AuthorizeView>
+    <Authorized>
+<body>
+<main>
+    <h1>Alle bevestige memo's</h1>
+    <div class="list-container">
+
+         <div class="list-group">
+                 @if (memos != null)
+                 {
+                     @foreach (var memo in memos)
+                     {
+                        <a @onclick="() => RedirectToDetailPage(memo.Id)" class="list-group-item list-group-item-action flex-column align-items-start active">
+                             <div class="d-flex w-100 justify-content-between">
+                                 <h5 class="mb-1">Consigner: @memo.Consigner.Name</h5>
+                                 <small>Aanmaak: @GetDaysAgo(memo.CreateDate)</small>
+                             </div>
+                             <p class="mb-1">Aantal producten in de memo: @memo.Products.Count</p>
+                             <small>@(memo.TermsAccepted ? "geaccepteerd" : "nog niet geaccepteerd door consigner")</small>
+                         </a>
+                     }
+                 }
+         </div>
+    </div>
+</main>
+</body>
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center">
+            <p class="text-danger" style="font-size: 1.5rem;">Unauthorized. Please log in.</p>
+            <div class="button">
+                <a class="btn btn-primary btn-lg" href="/login">Login</a>
+            </div>
+        </div>
+
+    </NotAuthorized>
+</AuthorizeView>
+<style>
+    body{
+      
+    }
+
+
+    main{
+        width: 100vw;
+        height: 50vh;
+    }
+
+    .list-container{
+        width : 50%;
+        height : 100%;
+        margin : 5rem auto auto auto;
+        border : solid 1px lightgrey;
+        border-radius : 2rem;
+    }
+    ul{
+        width : 90%;
+        margin : auto;
+        list-style : none;
+    }
+    li {
+        border-radius : 1rem;
+        border : 1px solid lightgrey;
+        padding: 1rem;
+        margin : 1rem;
+    }
+
+    li :hover {
+            border: 10px solid blue;
+        }
+
+    h1{
+        text-align : center;
+        
+    }
+</style>
+
+@code {
+    private string memoUrl = "https://localhost:7001/api/Memo/";
+    private List<MemoDTO> memos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await Http.GetAsync($"{Http.BaseAddress}/notifications");
+            memos = await Http.GetFromJsonAsync<List<MemoDTO>>(memoUrl);
+            Console.WriteLine(memos[0]);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private string GetDaysAgo(DateTime createDate)
+    {
+        TimeSpan timeDifference = DateTime.Now - createDate;
+        int days = (int)timeDifference.TotalDays;
+
+        if (days == 0)
+        {
+            return "Vandaag";
+        }
+        else if (days == 1)
+        {
+            return "Gisteren";
+        }
+        else
+        {
+            return $"{days} dagen geleden";
+        }
+    }
+     
+
+    private void RedirectToDetailPage(int memoId)
+    {
+        navigationManager.NavigateTo($"/memo/{memoId}");
+    }
+}

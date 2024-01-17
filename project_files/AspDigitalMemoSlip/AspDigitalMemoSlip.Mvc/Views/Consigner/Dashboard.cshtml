@@ -1,0 +1,75 @@
+﻿
+@{
+
+}
+
+
+<h1>Overzicht van uw consigners</h1>
+
+<div class="button-container">
+    <a href="@Url.Action("GetConsigners")">vraag alle consignee's op</a>
+</div>
+
+<div class="list-container">
+    @if (ViewBag.Consignees != null)
+    {
+        @foreach (var consignee in ViewBag.Consignees)
+        {
+            <div class="info-consignee">
+                <p>@consignee.Name</p>
+                <p>@consignee.NationalRegistryNumber</p>
+                <p>@consignee.NationalRegistryNumberExpireDate</p>
+
+                <div class="button-container">
+                    <a href="@Url.Action("Index", "Consignee")">
+                        @if(consignee.Approved == null)
+                        {
+                            consignee.Approved = false;
+                        }
+                        @if (consignee.Approved)
+                        {
+                            <span class="approved">Identiteitskaart goedgekeurd</span>
+                        }
+                        else
+                        {
+                            <span class="not-approved">geen goedgekeurde identiteitskaart</span>
+                        }
+                    </a>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+
+<style>
+
+    .list-container{
+        width : 40vw;
+    }
+    .info-consignee{
+        background-color : white;
+        border : solid 1px black;
+        border-radius : 1rem;
+        margin : 2rem;
+    }
+   
+    .info-consignee p {
+        padding-left : 1rem;
+    }
+
+    .info-consignee span {
+        padding-left: 1rem;
+        border-radius : 1rem;
+        padding : 1rem;
+    }
+
+    .approved {
+        background-color: #C9FFC3;
+    }
+
+    .not-approved {
+        background-color: #FC8F8F;
+    }
+
+</style>

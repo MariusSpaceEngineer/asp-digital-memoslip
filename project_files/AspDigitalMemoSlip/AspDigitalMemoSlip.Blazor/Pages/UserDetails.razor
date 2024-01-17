@@ -1,0 +1,203 @@
+﻿@page "/userdetails"
+@using System.Text
+@using Microsoft.AspNetCore.WebUtilities
+@using System.Text.Json
+@using System.Collections.Generic
+@using Blazored.LocalStorage
+@using AspDigitalMemoSlip.Blazor.Models;
+@using Microsoft.AspNetCore.Authorization
+@inject HttpClient Http
+@inject ILocalStorageService localStorage
+@inject NavigationManager NavigationManager
+@attribute [Authorize]
+
+<AuthorizeView>
+    <Authorized>
+        <div class="container">
+            <div class="text-center">
+                <h3 class="mb-4 mt-4" style="font-size: 2rem;">User Details</h3>
+            </div>
+
+            <div style="display: flex; justify-content: center;">
+
+                <div class="card" style="width: 100%;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p style="font-size: 1rem;"><strong>Username:</strong> @userInfo.Username</p>
+                                <p style="font-size: 1rem;"><strong>Name:</strong> @userInfo.Name</p>
+                                <p style="font-size: 1rem;"><strong>Role:</strong> @userInfo.Role</p>
+                                <p style="font-size: 1rem;"><strong>VAT-Number:</strong> @userInfo.VatNumber</p>
+                                <p style="font-size: 1rem;"><strong>Insurance Number:</strong> @userInfo.InsuranceNumber</p>
+                                <p style="font-size: 1rem;"><strong>Insurance Coverage (EUR):</strong> @userInfo.InsuranceCoverage</p>
+                                <p style="font-size: 1rem;"><strong>Phone Number:</strong> @userInfo.PhoneNumber</p>
+                                <p style="font-size: 1rem;"><strong>ID Number:</strong> @userInfo.IdNumber</p>
+                                <p style="font-size: 1rem;"><strong>ID Expire Date:</strong> @userInfo.IdExpireDate</p>
+                            </div>
+                            @if (!string.IsNullOrEmpty(userInfo.SelfieImageBase64))
+                            {
+                                <img src="@($"data:image/jpeg;base64,{userInfo.SelfieImageBase64}")" alt="Selfie" class="img-fluid mb-3" style="max-width: 30%; height: auto;" />
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(userInfo.IdCopyImageBase64))
+                        {
+                            <div class="d-flex flex-column align-items-start mb-3">
+                                <p style="font-size: 1rem;"><strong>ID Copy:</strong></p>
+                                <img src="@($"data:image/jpeg;base64,{userInfo.IdCopyImageBase64}")" alt="ID Copy" class="img-fluid" style="max-width: 75%; height: auto; max-height: 300px;" />
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(successMessage))
+                        {
+                            <div class="alert alert-success text-center" role="alert">
+                                @successMessage
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger text-center" role="alert">
+                                @errorMessage
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(userInfo.QrCode))
+                        {
+                            <div class="d-flex flex-column align-items-center mb-3">
+                                <p class="text-danger text-center" style="font-size: 1rem;">Scan the QR code with your preferred authenticator to activate it:</p>
+                                <img src="@($"data:image/png;base64,{userInfo.QrCode}")" alt="QR Code" class="img-fluid" style="max-width: 75%; height: auto; max-height: 300px;" />
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-center">
+                            @if (userInfo.MfaEnabled)
+                            {
+                                <button @onclick="DisableMfa" class="btn btn-danger mb-3">Disable MFA</button>
+                            }
+                            else
+                            {
+                                <button @onclick="EnableMfa" class="btn btn-success mb-3">Enable MFA</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center">
+            <p class="text-danger" style="font-size: 1.5rem;">Unauthorized. Please log in.</p>
+            <div class="button">
+                <a class="btn btn-primary btn-lg" href="/login">Login</a>
+            </div>
+        </div>
+
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code {
+    private UserInfo userInfo = new UserInfo();
+    private string successMessage;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetUserInfo();
+    }
+
+    private async Task GetUserInfo()
+    {
+        var token = await localStorage.GetItemAsync<string>("authToken");
+        if (!string.IsNullOrEmpty(token))
+        {
+            var claims = ExtractClaimsFromToken(token);
+            if (claims != null)
+            {
+                FillUserInfoFromClaims(claims);
+                await FetchUserImages();
+            }
+        }
+    }
+
+    private Dictionary<string, object> ExtractClaimsFromToken(string token)
+    {
+        var parts = token.Split('.');
+        if (parts.Length == 3)
+        {
+            var payload = parts[1];
+            var jsonPayload = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(payload));
+            return JsonSerializer.Deserialize<Dictionary<string, object>>(jsonPayload);
+        }
+        return null;
+    }
+
+    private void FillUserInfoFromClaims(Dictionary<string, object> claims)
+    {
+        userInfo.Id = claims["nameid"].ToString();
+        userInfo.Username = claims["unique_name"].ToString();
+        userInfo.Name = claims["name"].ToString();
+        userInfo.PhoneNumber = claims["phone_number"].ToString();
+        userInfo.VatNumber = claims["vat_number"].ToString();
+        userInfo.InsuranceNumber = claims["insurance_number"].ToString();
+        userInfo.InsuranceCoverage = claims["insurance_coverage"].ToString();
+        userInfo.IdExpireDate = claims.ContainsKey("id_expire_date") ? DateTime.Parse(claims["id_expire_date"].ToString()).ToString("dd-MM-yyyy") : null;
+        userInfo.IdNumber = claims["id_number"].ToString();
+        userInfo.IdWillExpire = claims.ContainsKey("id_will_expire") ? bool.Parse(claims["id_will_expire"].ToString()) : (bool?)null;
+        userInfo.MfaEnabled = claims.ContainsKey("mfa_enabled") ? bool.Parse(claims["mfa_enabled"].ToString()) : false;
+        userInfo.Role = claims["role"].ToString();
+    }
+
+    private async Task FetchUserImages()
+    {
+        var fullUrl = $"{Http.BaseAddress}/Authentication/consignee/images/{userInfo.Id}";
+        var imagesResponse = await Http.GetAsync(fullUrl);
+        if (imagesResponse.IsSuccessStatusCode)
+        {
+            var imagesJson = await imagesResponse.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+            var images = JsonSerializer.Deserialize<Dictionary<string, UserImagesModel>>(imagesJson, options);
+            if (images.ContainsKey("idCopy"))
+            {
+                userInfo.IdCopyImageBase64 = images["idCopy"].FileContents;
+            }
+            if (images.ContainsKey("selfie"))
+            {
+                userInfo.SelfieImageBase64 = images["selfie"].FileContents;
+            }
+        }
+    }
+
+    private async Task ToggleMfa(bool enable)
+    {
+        var fullUrl = $"{Http.BaseAddress}/Authentication/consignee/mfa";
+
+        var response = await Http.PutAsync(fullUrl, null);
+        if (response.IsSuccessStatusCode)
+        {
+            userInfo.QrCode = enable ? await response.Content.ReadAsStringAsync() : null;
+            userInfo.MfaEnabled = enable;
+            StateHasChanged(); // Notify Blazor that the state has changed and the UI needs to be updated
+
+            successMessage = enable ? "Multi-Factor Authentication has been successfully enabled." : $"{await response.Content.ReadAsStringAsync()}";
+        }
+        else
+        {
+            errorMessage = $"Failed to {(enable ? "enable" : "disable")} Multi-Factor Authentication. Please try again.";
+        }
+    }
+
+    private async Task EnableMfa()
+    {
+        await ToggleMfa(true);
+    }
+
+    private async Task DisableMfa()
+    {
+        await ToggleMfa(false);
+    }
+
+}

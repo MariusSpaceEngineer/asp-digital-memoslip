@@ -1,0 +1,185 @@
+﻿@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+@code {
+    private bool isMenuOpen = false;
+
+    private string menuStyle => isMenuOpen ? "display: block;" : "display: none;";
+
+    private void ToggleMenu()
+    {
+        isMenuOpen = !isMenuOpen;
+    }
+
+    private async Task RemoveLocalStorageKey(string key)
+    {
+        await JSRuntime.InvokeVoidAsync("removeLocalStorageKey", key);
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+}
+<div class="header-container">
+    <div class="logo-section">
+        <div class="logo">
+            <img src="https://www.dev-group.com/wp-content/uploads/2016/07/dev-group-logo-b.png" alt="Dev Group Logo" class="nav-logo">
+        </div>
+    </div>
+    <div class="nav-icon" @onclick="ToggleMenu">
+        ☰
+    </div>
+</div>
+
+
+<div class="menu-items-container" style="@menuStyle">
+    <div class="menu-items" style="@menuStyle">
+        <AuthorizeView>
+            <Authorized>
+                <div class="button-container">
+                    <div class="button">
+                        <NavLink class="nav-link bi bi-house-door" href="home">
+                            <p>Home</p>
+                        </NavLink>
+                    </div>
+                    <div class="button">
+                        <NavLink class="nav-link bi bi-file-earmark-text" href="salesconfirmation">
+                            <p>Sales Confirmation</p>
+                        </NavLink>
+                    </div>
+                    <div class="button">
+                        <NavLink class="nav-link bi bi-file-earmark-arrow-up" href="AcceptMemoSlips">
+                            <p>Accept Memo Slips</p>
+                        </NavLink>
+                    </div>
+                    <div class="button">
+                        <NavLink class="nav-link bi bi-person" href="userDetails">
+                            <p>Profile</p>
+                        </NavLink>
+                    </div>
+                    <div class="button">
+                        <NavLink class="nav-link bi bi-cart" href="AllProducts">
+                            <p>All Products</p>
+                        </NavLink>
+                    </div>
+                    <div class="button">
+                        <NavLink class="nav-link bi bi-file-earmark-spreadsheet" href="CreateInvoice">
+                            <p>Create Invoices</p>
+                        </NavLink>
+                    </div>
+                    <div class="button">
+                        <NavLink class="nav-link bi bi-file-earmark-spreadsheet" href="AllInvoices">
+                            <p>All Invoices</p>
+                        </NavLink>
+                    </div>
+                    <div class="button">
+                        <NavLink class="nav-link bi bi-box-arrow-in-right" href="" @onclick="@(async (e) => { await RemoveLocalStorageKey("authToken"); })">
+                            <p>Logout</p>
+                        </NavLink>
+                    </div>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="button">
+                    <NavLink class="nav-link" href="login">
+                        <p>Login</p>
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+<style>
+    body .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background-color: #fff;
+        color: #333;
+    }
+
+    body .logo-section {
+        display: flex;
+        align-items: center;
+    }
+
+    body .nav-icon {
+        font-size: 20px;
+        cursor: pointer;
+        color: #333;
+    }
+
+    body .nav-logo {
+        max-height: 40px;
+        margin-right: 10px;
+    }
+
+    body .menu-items-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: url('https://www.dev-group.com/wp-content/uploads/2016/07/2black-diamond-ptn.png') repeat;
+    }
+
+    body .menu-items {
+        display: flex;
+    }
+
+    body .button-container {
+    }
+
+    body .nav-link {
+        display: flex;
+        align-items: center;
+        position: relative;
+        padding: 15px;
+        color: #fff;
+        text-decoration: none;
+    }
+
+
+
+    body .bi-icon::before {
+        font-family: 'Bootstrap Icons';
+        margin-right: 5px;
+    }
+
+    body .bi-house-door::before {
+    }
+
+    body .bi-cash::before {
+    }
+
+    body .bi-file-earmark-text::before {
+    }
+
+    body .bi-file-earmark-arrow-up::before {
+    }
+
+    body .bi-person::before {
+    }
+
+    body .bi-cart::before {
+    }
+
+    body .bi-file-earmark-spreadsheet::before {
+    }
+
+    body .bi-box-arrow-in-right::before {
+    }
+
+    body .nav-link:hover {
+        background-color: #eee;
+        color: #2C3E50;
+    }
+
+    body .active {
+        background-color: lightblue;
+        color: #137087;
+    }
+
+    body .button-container .button .nav-link p {
+        margin: 0;
+        margin-left: 10px;
+    }
+</style>
+

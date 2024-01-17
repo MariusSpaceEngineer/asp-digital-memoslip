@@ -1,0 +1,116 @@
+﻿@model AspDigitalMemoSlip.Mvc.Models.MemoViewModel
+
+@{
+    ViewData["Title"] = "Create Memo";
+}
+
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+<h2>Create Memo</h2>
+
+<form asp-action="Create" class="form-group">
+    <!-- Display a summary of all validation errors -->
+    <div class="validation-summary">
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    </div>
+
+    <div>
+        <h3>Products</h3>
+        <div id="products">
+            @for (int i = 0; i < Model.Memo.Products.Count; i++)
+            {
+                <div class="product form-row">
+                    <input asp-for="@Model.Memo.Products[i].LotNumber" class="form-control col" placeholder="Lot number" />
+                    @Html.ValidationMessageFor(model => model.Memo.Products[i].LotNumber, "", new { @class = "text-danger" })
+
+                    <input asp-for="@Model.Memo.Products[i].Description" class="form-control col" placeholder="Description" />
+                    @Html.ValidationMessageFor(model => model.Memo.Products[i].Description, "", new { @class = "text-danger" })
+
+                    <input asp-for="@Model.Memo.Products[i].Carat" class="form-control col" placeholder="Carats" />
+                    @Html.ValidationMessageFor(model => model.Memo.Products[i].Carat, "", new { @class = "text-danger" })
+
+                    <input asp-for="@Model.Memo.Products[i].Price" class="form-control col" placeholder="Price" />
+                    @Html.ValidationMessageFor(model => model.Memo.Products[i].Price, "", new { @class = "text-danger" })
+
+                    <input asp-for="@Model.Memo.Products[i].Remarks" class="form-control col" placeholder="Remarks" />
+                    @Html.ValidationMessageFor(model => model.Memo.Products[i].Remarks, "", new { @class = "text-danger" })
+
+                    <button type="button" class="btn btn-danger col-auto" onclick="removeProduct(this)">Remove</button>
+                </div>
+            }
+        </div>
+        <button type="button" class="btn btn-primary" onclick="addProduct()">Add Product</button>
+    </div>
+
+    <div class="my-3">
+        <h3>Consignee</h3>
+        <select asp-for="Memo.ConsigneeId" asp-items="Model.Consignees" class="form-control"></select>
+        @Html.ValidationMessageFor(model => model.Memo.ConsigneeId, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-check my-3">
+        <input asp-for="Memo.TermsAccepted" class="form-check-input" />
+        <label asp-for="Memo.TermsAccepted" class="form-check-label">I accept the Terms and Conditions</label>
+        @Html.ValidationMessageFor(model => model.Memo.TermsAccepted, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="my-3">
+        <h3>Password</h3>
+        <input type="password" asp-for="Memo.Password" class="form-control" placeholder="Enter password" />
+        @Html.ValidationMessageFor(model => model.Memo.Password, "", new { @class = "text-danger" })
+    </div>
+
+    <button type="submit" class="btn btn-success">Create</button>
+</form>
+
+
+
+
+
+@section Scripts {
+    <script>
+        function addProduct() {
+            var productsDiv = document.getElementById('products');
+            var productDiv = document.createElement('div');
+            productDiv.classList.add('product');
+
+            var index = productsDiv.children.length; 
+
+            var lotNumberInput = createInput('Memo.Products[' + index + '].LotNumber', 'text', 'Lot number');
+            var descriptionInput = createInput('Memo.Products[' + index + '].Description', 'text', 'Description');
+            var caratInput = createInput('Memo.Products[' + index + '].Carat', 'text', 'Carats');
+            var priceInput = createInput('Memo.Products[' + index + '].Price', 'text', 'Price');
+            var remarksInput = createInput('Memo.Products[' + index + '].Remarks', 'text', 'Remarks');
+
+            productDiv.appendChild(lotNumberInput);
+            productDiv.appendChild(descriptionInput);
+            productDiv.appendChild(caratInput);
+            productDiv.appendChild(priceInput);
+            productDiv.appendChild(remarksInput);
+
+            var removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.textContent = 'Remove';
+            removeButton.onclick = function () { removeProduct(removeButton) };
+            productDiv.appendChild(removeButton);
+
+            productsDiv.appendChild(productDiv);
+        }
+
+        function createInput(name, type, placeholder) {
+            var input = document.createElement('input');
+            input.name = name;
+            input.type = type;
+            input.placeholder = placeholder;
+            return input;
+        }
+
+
+        function removeProduct(button) {
+            var productDiv = button.parentNode;
+            productDiv.parentNode.removeChild(productDiv);
+        }
+
+
+    </script>
+}

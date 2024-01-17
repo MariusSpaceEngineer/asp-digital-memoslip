@@ -1,0 +1,528 @@
+﻿@page "/AllProducts"
+@using System.Collections.Generic
+@using System.Net.Http.Json
+@using DTOClassLibrary.DTO.ErrorHandling;
+@using DTOClassLibrary.DTO.Memo;
+@using DTOClassLibrary.DTO.Product
+@using DTOClassLibrary.DTO;
+@using DTOClassLibrary.DTO.ProductSale;
+@using DTOClassLibrary.Enums
+@using AspDigitalMemoSlip.Blazor.Models
+@using System.Text
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Authorization
+@inject HttpClient Http
+@attribute [Authorize]
+<style>
+    .container {
+        max-width: 100vw;
+        min-height: 100vh;
+        margin: auto;
+        text-align: center;
+        position: relative;
+        /*border: 1px solid #009ee3;*/
+    }
+
+    h3 {
+        color: #333;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid #009ee3;
+        padding: 8px;
+    }
+
+    th {
+        background-color: #009ee3;
+        color: white;
+    }
+
+</style>
+<AuthorizeView>
+    <Authorized>
+        <div class="container">
+            <h3>All Products</h3>
+            @if (succesCreatedSalesConfirmation)
+            {
+                <div class="alert alert-success" role="alert">
+                    Sales confirmation was successful!
+                </div>
+            }
+            @if (errorMessages.Any())
+            {
+                <div class="alert alert-danger" role="alert">
+                    @foreach (var errorMessage in errorMessages)
+                    {
+                        @((MarkupString)(errorMessage + "<br>"))
+
+                    }
+                </div>
+            }
+            <button class="btn btn-primary" @onclick="ToggleCheckboxVisibility">Select lots for sale confirmation</button>
+            @if (createConfirmationMode)
+            {
+                <button class="btn btn-primary" @onclick="CreateListProductsSelected" data-toggle="modal" data-target="#changestatemodel">Confirm</button>
+            }
+            @if (memos == null)
+            {
+                <p>Loading...</p>
+            }
+            else
+            {
+                @foreach (var memo in memos)
+                {
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <div class="row">
+                                <div class="col-6 col-md-4 col-lg-3">
+                                    <strong class="text-primary">Created Date:</strong> @memo.CreateDate
+                                </div>
+                                <div class="col-6 col-md-4 col-lg-3">
+                                    <strong class="text-primary">Created by: </strong>@memo.Consigner.Name
+                                </div>
+                                <div class="col-12 col-md-4 col-lg-3">
+                                    <strong class="text-danger">Total Sales Price:</strong>@memo.TotalPrice() euro
+                                </div>
+                                <div class="col-12 col-lg-3">
+                                    <button class="btn btn-link" data-toggle="collapse" data-target="#productsCollapse_@memo.Id">
+                                        <strong>Show Products</strong>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="collapse" id="productsCollapse_@memo.Id">
+                                <ul class="list-unstyled">
+                                    @if (memo.Products != null)
+                                    {
+                                        @foreach (var product in memo.Products)
+                                        {
+
+                                            <li class="list-group-item @(product.Carat <= 0 ? "bg-dark text-white" : "bg-light")">
+                                                <div class="row">
+                                                    <div class="col-12 col-md-6 col-lg-3">
+                                                        <strong class="text-info">Lot Number:</strong> @product.LotNumber
+                                                    </div>
+                                                    <div class="col-12 col-md-6 col-lg-3">
+                                                        <strong class="text-info">Description:</strong> @product.Description
+                                                    </div>
+                                                    <div class="col-12 col-md-6 col-lg-3">
+                                                        <strong class="text-info">Price:</strong> $@product.Price.ToString("0.00")
+                                                    </div>
+                                                    <div class="col-12 col-md-6 col-lg-3">
+                                                        <strong class="text-info">Carat:</strong> @product.Carat
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <span class="badge badge-pill @(product.State == ProductState.LOST || product.State == ProductState.STOLEN ? "badge-danger" : "badge-success")">
+                                                            @(product.State == ProductState.LOST || product.State == ProductState.STOLEN ? "lost" : (product.State == ProductState.NONE ? "" : "returned"))
+                                                        </span>
+                                                        @if (createConfirmationMode && product.State != ProductState.LOST && product.State != ProductState.STOLEN && product.State != ProductState.RETURNED
+                                                       && product.Carat > 0)
+                                                        {
+                                                            <div class="col-12 mt-2">
+                                                                <input type="checkbox" @bind="product.Selected" />
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                }
+            }
+
+
+            <div class="modal fade" id="changestatemodel" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLongTitle">Opmerking toevoegen</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            @if (selectedProducts != null && selectedProducts.Any())
+                            {
+                                <ul class="list-group">
+                                    @foreach (var product in selectedProducts)
+                                    {
+                                        @if (product.Carat > 0)
+                                        {
+                                            <li class="list-group-item">
+                                                <strong>Lot Number:</strong> @product.LotNumber
+                                                <br />
+                                                <strong>Description:</strong> @product.Description
+                                                @if (state == ProductState.SOLD)
+                                                {
+                                                    <div class="row mt-2">
+                                                        <div class="col-md-6">
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">Price</span>
+                                                                <input type="number" class="form-control" @bind="product.Price" step="1" min="0">
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">Carat</span>
+                                                                <input type="number" class="form-control" @bind="product.Carat" step="1" min="0">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </li>
+                                        }
+                                    }
+
+                                </ul>
+
+                            }
+                            else
+                            {
+                                <p>No products selected.</p>
+                            }
+                        </div>
+                        <div class="modal-footer">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="productState" id="soldRadio" value="SOLD" @onclick="() => UpdateProductState(ProductState.SOLD)">
+                                <label class="form-check-label" for="soldRadio">Mark lot(s) as sold</label>
+
+                                <input class="form-check-input" type="radio" name="productState" id="stolenRadio" value="STOLEN" @onclick="() => UpdateProductState(ProductState.STOLEN)">
+                                <label class="form-check-label" for="stolenRadio">Mark lot(s) as stolen</label>
+
+                                <input class="form-check-input" type="radio" name="productState" id="returnedRadio" value="RETURNED" @onclick="() => UpdateProductState(ProductState.RETURNED)">
+                                <label class="form-check-label" for="returnedRadio">Mark lot(s) as returned</label>
+
+                                <input class="form-check-input" type="radio" name="productState" id="lostRadio" value="LOST" @onclick="() => UpdateProductState(ProductState.LOST)">
+                                <label class="form-check-label" for="lostRadio">Mark lot(s) as lost</label>
+                            </div>
+                        </div>
+                        @if (state == ProductState.SOLD)
+                        {
+                            <div class="row">
+                                <div class="col-md-8 mx-auto">
+                                    <div class="input-group mt-3">
+                                        <span class="input-group-text">Commission Percentage</span>
+                                        <input type="number" class="form-control" @bind="percentage" step="0.10" min="0" max="100" placeholder="0 - 100">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <strong>Select an Option:</strong>
+                                    <div class="form-check form-check-inline">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="radioOptions" id="option1" value="15" @onchange="RadioSelectionChanged" />
+                                            <label class="form-check-label" for="option1">15 days</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="radioOptions" id="option2" value="30" @onchange="RadioSelectionChanged" />
+                                            <label class="form-check-label" for="option1">30 days</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="radioOptions" id="option3" value="45" @onchange="RadioSelectionChanged" />
+                                            <label class="form-check-label" for="option1">45 days</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="radioOptions" id="option4" value="60" @onchange="RadioSelectionChanged" />
+                                            <label class="form-check-label" for="option1">60 days</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="radioOptions" id="option5" value="90" @onchange="RadioSelectionChanged" />
+                                            <label class="form-check-label" for="option1">90 days</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="radioOptions" id="option6" value="120" @onchange="RadioSelectionChanged" />
+                                            <label class="form-check-label" for="option1">120 days</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        @if (state != ProductState.NONE)
+                        {
+                            <button type="button" class="btn btn-primary" @onclick="SendSelectedItems" data-dismiss="modal" aria-label="Close">Confirm</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center">
+            <p class="text-danger" style="font-size: 1.5rem;">Unauthorized. Please log in.</p>
+            <div class="button">
+                <a class="btn btn-primary btn-lg" href="/login">Login</a>
+            </div>
+        </div>
+
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code {
+    private List<MemoDTO> memos;
+    private List<ProductDTO> selectedProducts = new List<ProductDTO>();
+    private ProductState state = ProductState.NONE;
+    private double percentage = 0;
+    private string selectedOption = "15 days";
+    private List<string> errorMessages = new List<string>();
+
+
+    private bool createConfirmationMode = false;
+    private bool succesCreatedSalesConfirmation = false;
+    private const string salesConfirmationRequestUrl = "https://localhost:7001/api/SalesConfirmation";
+    private const string productStateChange = "https://localhost:7001/products/state";
+    private async Task SaleProduct(ProductDTO product)
+    {
+        try
+        {
+
+            var updateDTO = new UpdateSoldStatusCounter
+                {
+                    ProductId = product.ID,
+                    SuggestedPrice = product.SuggestedPrice,
+                    //   CommissionPaidBy = product.CommissionPaidBy,
+                    CommisionPrice = product.CommisionPrice,
+                    Status = SoldStatusDTO.SuggestedPrice
+                };
+
+            var result = await Http.PatchAsync($"{Http.BaseAddress}/UpdateSoldStatusCounter/{product.ID}",
+                new StringContent(JsonSerializer.Serialize(updateDTO), Encoding.UTF8, "application/json"));
+
+            if (result.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Product sold successfully!");
+                // Refresh the page after a successful update
+                await OnInitializedAsync();
+            }
+            else
+            {
+                Console.WriteLine($"Failed to update product: {result.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Make an API request to get the list of products
+            memos = await Http.GetFromJsonAsync<List<MemoDTO>>($"{Http.BaseAddress}/Memo/memo");
+            foreach (var item in memos)
+            {
+                Console.WriteLine(item.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception (e.g., log it, display an error message)
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    private void ToggleCheckboxVisibility()
+    {
+        createConfirmationMode = !createConfirmationMode;
+    }
+
+
+    //it justs works
+    private void RadioSelectionChanged(ChangeEventArgs e)
+    {
+        selectedOption = e.Value.ToString();
+    }
+
+    private void SendSelectedItems()
+    {
+        switch (state)
+        {
+            case ProductState.LOST:
+            case ProductState.STOLEN:
+            case ProductState.RETURNED:
+                ChangeStateOfItems();
+                break;
+            case ProductState.SOLD:
+                SendSalesConfirmation();
+                break;
+            default:
+                ClearChanges();
+                break;
+
+
+        }
+    }
+
+    private async void ChangeStateOfItems()
+    {
+
+        var productStateChanges = new ProductStateChangeDTO
+            {
+                ProductStateUpdates = new List<ProductStateUpdate>()
+            };
+
+        foreach (var product in selectedProducts)
+        {
+            var stateUpdate = new ProductStateUpdate
+                {
+                    ProductId = product.ID,
+                    ProductState = state,
+                    MemoId = product.MemoId
+                };
+            productStateChanges.ProductStateUpdates.Add(stateUpdate);
+        }
+
+        var result = await Http.PutAsJsonAsync(productStateChange, productStateChanges);
+
+        if (result.IsSuccessStatusCode)
+        {
+            var options = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                };
+
+            var content = await result.Content.ReadAsStringAsync();
+            Console.WriteLine(content);
+            List<ProductDTO> allProductChanges = JsonSerializer.Deserialize<List<ProductDTO>>(content, options);
+
+            foreach (var productChange in allProductChanges)
+            {
+                var memoToUpdate = memos.FirstOrDefault(m => m.Id == productChange.MemoId);
+                if (memoToUpdate != null)
+                {
+                    var productToUpdate = memoToUpdate.Products.FirstOrDefault(p => p.ID == productChange.ID);
+                    if (productToUpdate != null)
+                    {
+                        productToUpdate.State = productChange.State;
+                        productToUpdate.Remarks = productChange.Remarks;
+                    }
+                }
+            }
+
+            StateHasChanged();
+        }
+    }
+    private async void SendSalesConfirmation()
+    {
+
+        SalesConfirmationDTO salesConfirmation = new SalesConfirmationDTO();
+        salesConfirmation.SuggestedCommision = percentage;
+        salesConfirmation.PaymentTermDays = selectedOption;
+
+        foreach (var item in selectedProducts)
+        {
+            var productSale = new ProductSaleDTO
+                {
+                    ProductId = item.ID,
+                    CaratsSold = item.Carat,
+                    SalePrice = item.Price
+                };
+
+            salesConfirmation.SoldProducts?.Add(productSale);
+        }
+
+        var result = await Http.PostAsJsonAsync(salesConfirmationRequestUrl, salesConfirmation);
+
+        if (result.IsSuccessStatusCode)
+        {
+            succesCreatedSalesConfirmation = true;
+            StateHasChanged();
+        }
+        else
+        {
+            await HandleRegistrationError(result);
+        }
+        foreach (var product in selectedProducts)
+        {
+            Console.WriteLine(product.Price);
+        }
+        StateHasChanged();
+        ClearChanges();
+    }
+
+    private async Task HandleRegistrationError(HttpResponseMessage response)
+    {
+        try
+        {
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var responseObject = System.Text.Json.JsonSerializer.Deserialize<ErrorResponse>(responseContent);
+
+            // Check if the message contains "--"
+            if (responseObject.Message.Contains("--"))
+            {
+                // Extract only the part after the property name
+                var messages = responseObject.Message.Split("--");
+                var formattedMessages = messages.Select(msg =>
+                {
+                    var parts = msg.Split(":");
+                    return parts.Length > 1 ? parts[1].Split("Severity")[0].Trim() : "";
+                });
+
+                errorMessages.AddRange(formattedMessages.Where(msg => !string.IsNullOrEmpty(msg)));
+            }
+            else
+            {
+                // If the message does not contain "--", add the entire message to the list
+                errorMessages.Add(responseObject.Message);
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessages.Add($"An error occurred while processing the response: {ex.Message}");
+        }
+    }
+
+    private void CreateListProductsSelected()
+    {
+        foreach (var memo in memos)
+        {
+            foreach (var product in memo.Products)
+            {
+                if (product.Selected && !selectedProducts.Contains(product))
+                {
+                    selectedProducts.Add(product);
+                }
+            }
+        }
+    }
+
+    private void UpdateProductState(ProductState state)
+    {
+        this.state = state;
+    }
+
+    //after succes or fail clear all changes
+    private void ClearChanges()
+    {
+        this.selectedOption = "";
+        this.percentage = 0;
+        this.selectedProducts.Clear();
+        this.state = ProductState.NONE;
+    }
+}

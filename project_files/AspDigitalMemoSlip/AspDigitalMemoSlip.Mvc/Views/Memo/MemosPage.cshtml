@@ -1,0 +1,159 @@
+﻿@using DTOClassLibrary.DTO.Memo
+@model IEnumerable<MemoDTO>
+
+@{
+    ViewData["Title"] = "MemosPage";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>MemosPage</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        .header-link {
+            cursor: pointer;
+            color: #007bff;
+        }
+
+            .header-link:hover {
+                text-decoration: underline;
+            }
+
+        .sort-arrow {
+            display: none;
+            margin-left: 5px; /* Add some spacing between text and arrow */
+        }
+
+        .sorted .sort-arrow {
+            display: inline;
+        }
+
+       
+
+       body{
+            background-color: #DDF2FD;
+       }
+
+        
+
+    </style>
+    <script>
+        function sortTable(n, headerElement) {
+            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            table = document.getElementById("myTable");
+            switching = true;
+            dir = "asc";
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("TD")[n];
+                    y = rows[i + 1].getElementsByTagName("TD")[n];
+                    if (dir == "asc") {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == "desc") {
+                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount++;
+                } else {
+                    if (switchcount == 0 && dir == "asc") {
+                        dir = "desc";
+                        switching = true;
+                    }
+                }
+            }
+
+            // Remove "sorted" class from all headers
+            var headers = document.querySelectorAll("#myTable th");
+            headers.forEach(function (header) {
+                header.classList.remove("sorted");
+            });
+
+            // Toggle "sorted" class on the clicked header
+            headerElement.classList.add("sorted");
+
+            // Reset arrow indicators for all headers
+            headers.forEach(function (header) {
+                var arrowSpan = header.querySelector(".sort-arrow");
+                if (arrowSpan) {
+                    arrowSpan.textContent = "";
+                }
+            });
+
+            // Set arrow indicator on the clicked header
+            var arrowSpan = headerElement.querySelector(".sort-arrow");
+            if (dir == "asc") {
+                arrowSpan.textContent = "▼";
+            } else {
+                arrowSpan.textContent = "▲";
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <a asp-controller="Memo" asp-action="Create" class="btn btn-primary" style="width:20vw;margin-left:20vw; border: 1px solid #000; border-radius: 9px;">Create New Memo</a>
+    </div>
+
+
+
+
+    <div class="container mt-4">
+
+
+        @if (Model == null)
+        {
+            <p>Loading...</p>
+        }
+        else if (!Model.Any())
+        {
+            <p>No memos available.</p>
+        }
+        else
+        {
+            <table id="myTable" class="table table-bordered table-hover">
+                <thead class="thead-dark">
+                    <tr>
+                        <th class="header-link" onclick="sortTable(0, this)">ID <span class="sort-arrow">▼</span></th>
+                        <th class="header-link" onclick="sortTable(1, this)"># of Lots <span class="sort-arrow">▼</span></th>
+                        <th class="header-link" onclick="sortTable(2, this)">Consignee <span class="sort-arrow">▼</span></th>
+                        <th class="header-link" onclick="sortTable(3, this)">Creation Date <span class="sort-arrow">▼</span></th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var memo in Model)
+                    {
+                        <tr>
+                            <td>@memo.Id</td>
+                            <td>@memo.Products.Count</td>
+                            <td>@memo.Consignee.Name</td>
+                            <td>@memo.CreateDate</td>
+                            <td>
+                                <a href="@Url.Action("MemoDetails", new { id = memo.Id })" class="btn btn-primary btn-sm">Details</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+﻿@page "/{consignerUserName}/register"
+@using Blazored.LocalStorage;
+@using System.Net.Http.Headers;
+@using AspDigitalMemoSlip.Blazor.Models;
+@using DTOClassLibrary.DTO.ErrorHandling;
+@using Microsoft.AspNetCore.Components.Forms;
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ILocalStorageService localStorage
+@inject IConfiguration Configuration
+@inject IJSRuntime JSRuntime
+@inject IModalService Modal
+
+<EditForm Model="registerModel" OnValidSubmit="HandleRegister" class="container">
+    <h1 class="text-center mt-3 mb-3">Register</h1>
+
+    @if (errorMessages.Any())
+    {
+        <div class="alert alert-danger" role="alert">
+            @foreach (var errorMessage in errorMessages)
+            {
+                @((MarkupString)(errorMessage + "<br>"))
+
+            }
+        </div>
+    }
+
+    <div class="form-group">
+        <label for="username">Username</label>
+        <InputText id="username" @bind-Value="registerModel.Username" required class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="email">Email</label>
+        <InputText id="email" @bind-Value="registerModel.Email" type="email" required class="form-control" />
+    </div>
+
+
+    <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-group">
+            <InputText id="password" @bind-Value="registerModel.Password" type="password" required class="form-control" />
+            <div class="input-group-append">
+                <button type="button" @onclick="TogglePasswordVisibility" class="btn btn-outline-secondary">
+                    <i class="@passwordIcon"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <div class="input-group">
+            <InputText id="confirmPassword" @bind-Value="confirmPassword" type="password" required class="form-control" />
+            <div class="input-group-append">
+                <button type="button" @onclick="ToggleConfirmPasswordVisibility" class="btn btn-outline-secondary">
+                    <i class="@confirmPasswordIcon"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="form-group">
+        <label for="name">Name</label>
+        <InputText id="name" @bind-Value="registerModel.Name" required class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="phonenumber">Phone Number</label>
+        <InputText id="phonenumber" @bind-Value="registerModel.PhoneNumber" required class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="vatnumber">VAT-Number</label>
+        <InputText id="vatnumber" @bind-Value="registerModel.VATNumber" required class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="insurancenumber">Insurance Number</label>
+        <InputText id="insurancenumber" @bind-Value="registerModel.InsuranceNumber" required class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="nationalRegistryNumber">National Registry Number</label>
+        <InputText id="nationalRegistryNumber" @bind-Value="registerModel.NationalRegistryNumber" required class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="idCopy">ID Copy</label>
+        <InputFile id="idCopy" accept="image/*" OnChange="((e) => HandleFileUpload(e, data => registerModel.IDCopy = data))" required class="form-control-file" />
+    </div>
+
+    <div class="form-group">
+        <label for="nationalRegistryExpirationDate">National Registry Expiration Date</label>
+        <InputDate id="nationalRegistryExpirationDate" @bind-Value="registerModel.NationalRegistryExpirationDate" required class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="selfie">Selfie</label>
+        <InputFile id="selfie" accept="image/*" OnChange="((e) => HandleFileUpload(e, data => registerModel.Selfie = data))" required class="form-control-file" />
+    </div>
+
+    <div class="form-group">
+        <label for="insuranceCoverage">Insurance Coverage (EUR)</label>
+        <InputNumber id="insuranceCoverage" @bind-Value="registerModel.InsuranceCoverage" required class="form-control" />
+    </div>
+
+    <div class="form-check">
+        <InputCheckbox id="tcPlatform" @bind-Value="registerModel.TCPlatform" required class="form-check-input" />
+        <label for="tcPlatform" class="form-check-label">I have read and agree to the platform's terms of service and privacy policy.</label>
+    </div>
+
+    <div class="form-check">
+        <InputCheckbox id="tcMemo" @bind-Value="registerModel.TCMemo" required class="form-check-input" />
+        <label for="tcMemo" class="form-check-label">I have read and agree to the memo's terms of service and privacy policy.</label>
+    </div>
+
+    <div class="form-group mt-3">
+        <button type="submit" class="btn btn-primary" disabled="@(!IsFormValid)">Submit</button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public string consignerUserName { get; set; }
+    public RegisterModel registerModel = new RegisterModel();
+    private string confirmPassword;
+    private string passwordIcon = "fas fa-eye";
+    private bool passwordVisible = false;
+    private string confirmPasswordIcon = "fas fa-eye";
+    private bool confirmPasswordVisible = false;
+
+    private List<string> errorMessages = new List<string>();
+
+    //If any of the fields are empty the vorm is marked as invalid
+    private bool IsFormValid => registerModel.Username != null && registerModel.Email != null &&
+    registerModel.Password != null && confirmPassword != null
+    && registerModel.Name != null && registerModel.PhoneNumber != null
+    && registerModel.VATNumber != null && registerModel.InsuranceNumber != null
+    && registerModel.NationalRegistryNumber != null
+    && registerModel.IDCopy != null && registerModel.NationalRegistryExpirationDate != null &&
+    registerModel.Selfie != null && registerModel.InsuranceCoverage != null &&
+    registerModel.TCPlatform && registerModel.TCMemo;
+
+    protected override void OnInitialized()
+    {
+        registerModel.NationalRegistryExpirationDate = DateTime.Today;
+        base.OnInitialized();
+
+    }
+
+    //Shows the right icon next to the password fields
+    private async Task<string> ToggleVisibility(string elementId, bool isVisible, string visibleIcon, string hiddenIcon)
+    {
+        await JSRuntime.InvokeAsync<string>("togglePasswordVisibility", elementId);
+        isVisible = !isVisible;
+        return isVisible ? visibleIcon : hiddenIcon;
+    }
+
+    private async Task TogglePasswordVisibility()
+    {
+        passwordIcon = await ToggleVisibility("password", passwordVisible, "fas fa-eye-slash", "fas fa-eye");
+    }
+
+    private async Task ToggleConfirmPasswordVisibility()
+    {
+        confirmPasswordIcon = await ToggleVisibility("confirmPassword", confirmPasswordVisible, "fas fa-eye-slash", "fas fa-eye");
+    }
+
+    private async Task HandleRegister()
+    {
+        errorMessages.Clear();
+
+        ValidateRegistration();
+
+        // If there are error messages, scroll to the top of the page
+        if (errorMessages.Any())
+        {
+            await ScrollToTop();
+        }
+        else
+        {
+            await RegisterUser();
+        }
+    }
+
+    private void ValidateRegistration()
+    {
+        const long maxAllowedSize = 1024 * 1024; // 1 MB
+
+        if (registerModel.Password != confirmPassword)
+        {
+            errorMessages.Add("Passwords do not match.");
+        }
+
+        if (registerModel.NationalRegistryExpirationDate < DateTime.Today)
+        {
+            errorMessages.Add("The ID has expired.");
+        }
+
+        if (registerModel.IDCopy != null && registerModel.IDCopy.Size > maxAllowedSize)
+        {
+            errorMessages.Add("ID Copy exceeds the maximum allowed size of 1 MB.");
+        }
+
+        if (registerModel.Selfie != null && registerModel.Selfie.Size > maxAllowedSize)
+        {
+            errorMessages.Add("Selfie exceeds the maximum allowed size of 1 MB.");
+        }
+    }
+
+
+    private async Task ScrollToTop()
+    {
+        await JSRuntime.InvokeVoidAsync("scrollToTop");
+    }
+
+    private MultipartFormDataContent CreateRegistrationContent()
+    {
+        var content = new MultipartFormDataContent();
+
+        // Add file data
+        AddFileToContent(content, registerModel.IDCopy, "IDCopy");
+        AddFileToContent(content, registerModel.Selfie, "Selfie");
+
+        // Add other form data
+        content.Add(new StringContent(registerModel.Username), "Username");
+        content.Add(new StringContent(registerModel.Email), "Email");
+        content.Add(new StringContent(registerModel.Password), "Password");
+        content.Add(new StringContent(registerModel.PhoneNumber), "PhoneNumber");
+        content.Add(new StringContent(registerModel.Name), "Name");
+        content.Add(new StringContent(registerModel.VATNumber), "VATNumber");
+        content.Add(new StringContent(registerModel.InsuranceNumber), "InsuranceNumber");
+        content.Add(new StringContent(registerModel.InsuranceCoverage.ToString()), "InsuranceCoverage");
+        content.Add(new StringContent(registerModel.NationalRegistryNumber), "NationalRegistryNumber");
+        content.Add(new StringContent(registerModel.NationalRegistryExpirationDate.Date.ToString("d")), "NationalRegistryExpirationDate");
+
+        return content;
+    }
+
+
+    private async Task RegisterUser()
+    {
+        var content = CreateRegistrationContent();
+        var response = await Http.PostAsync($"{Http.BaseAddress}/Authentication/{consignerUserName.ToLower()}/register", content);
+        if (response.IsSuccessStatusCode)
+        {
+            ShowSuccessModal();
+        }
+        else
+        {
+            await HandleRegistrationError(response);
+        }
+
+        // If there are error messages, scroll to the top of the page
+        if (errorMessages.Any())
+        {
+            await ScrollToTop();
+        }
+    }
+
+    private void ShowSuccessModal()
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("Content", "Your account has been sent for validation to the consigner. Once it's accepted, it can be used.");
+        parameters.Add("IsVisible", true);
+        Modal.Show<RegisterSuccesfulModal>("Account Validation", parameters);
+    }
+
+    private async Task HandleRegistrationError(HttpResponseMessage response)
+    {
+        try
+        {
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var responseObject = System.Text.Json.JsonSerializer.Deserialize<ErrorResponse>(responseContent);
+
+            // Check if the message contains "--"
+            if (responseObject.Message.Contains("--"))
+            {
+                // Extract only the part after the property name
+                var messages = responseObject.Message.Split("--");
+                var formattedMessages = messages.Select(msg =>
+                {
+                    var parts = msg.Split(":");
+                    return parts.Length > 1 ? parts[1].Split("Severity")[0].Trim() : "";
+                });
+
+                errorMessages.AddRange(formattedMessages.Where(msg => !string.IsNullOrEmpty(msg)));
+            }
+            else
+            {
+                // If the message does not contain "--", add the entire message to the list
+                errorMessages.Add(responseObject.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessages.Add($"An error occurred while processing the response: {ex.Message}");
+        }
+    }
+
+    private void HandleFileUpload(InputFileChangeEventArgs e, Action<IBrowserFile> updateAction)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            updateAction(file);
+        }
+    }
+
+    private void AddFileToContent(MultipartFormDataContent content, IBrowserFile file, string name)
+    {
+        if (file != null)
+        {
+            var streamContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 1024 * 1024));
+            streamContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
+                {
+                    Name = name,
+                    FileName = file.Name
+                };
+            content.Add(streamContent, name);
+        }
+    }
+
+}
+

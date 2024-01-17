@@ -1,0 +1,45 @@
+﻿@using DTOClassLibrary.Enums;
+@model List<DTOClassLibrary.DTO.Notification.NotificationDTO>
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+
+<div class="text-center">
+    <h1 class="display-4" style="margin-bottom:4rem;">Welcome</h1>
+
+    @if (Context.Request.Cookies["authToken"] != null)
+    {
+
+        <h2>Notifications</h2>
+
+        <ul class="list-group">
+            @foreach (var notification in Model)
+            {
+                <li class="list-group-item">
+                    @notification.Timestamp.ToString("yyyy-MM-dd HH:mm:ss") -
+
+                    @switch (notification.EventType)
+                    {
+                        case GenericNotiType.SALESCONFCREATED:
+                            <p>A sales confirmation has been created by @notification.InitiatorName</p>
+                            break;
+                        case GenericNotiType.MEMOACCEPTED:
+                            <p>A memo has been accepted by @notification.InitiatorName</p>
+                            break;
+                        case GenericNotiType.PRODUCTSTATECHANGED:
+                            <p>A sales confirmation has been accepted by @notification.InitiatorName</p>
+                            break;
+                    }
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <a href="Account/Login" class="btn btn-primary">Login</a>
+    }
+    
+    
+</div>

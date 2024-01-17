@@ -1,0 +1,32 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome @ViewBag.Name</h1>
+
+    <p>Name: @ViewBag.Name</p>
+    <p>Phone Number: @ViewBag.PhoneNumber</p>
+
+    <div class="button-container">
+        <a href="@Url.Action("GetConsignerQRCode")" class="btn btn-primary">Generate QR-code for consignee</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ViewBag.QRCode))
+    {
+        <p class="text-danger pt-4">You can share this link with your consignees to enable them to create their accounts.</p>
+
+        <div class="qr-code-container">
+            <img src="@ViewBag.QRCode" alt="Consigner QR Code" style="width: 200px; height: 200px;" />
+        </div>
+        <a href="@ViewBag.Url">@ViewBag.Url</a>
+    }
+</div>
+
+
+
+
+

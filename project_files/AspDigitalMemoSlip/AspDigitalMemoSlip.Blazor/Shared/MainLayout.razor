@@ -1,0 +1,25 @@
+﻿@inherits LayoutComponentBase
+
+
+
+<div class="page">
+    <div class="sidebar">
+        <NavBar />
+    </div>
+
+    <main>
+       @Body
+    </main>
+
+    <CascadingBlazoredModal />
+</div>
+
+
+<style>
+    *,
+    body,
+    html{
+        padding : 0;
+        margin : 0;
+    }
+</style>

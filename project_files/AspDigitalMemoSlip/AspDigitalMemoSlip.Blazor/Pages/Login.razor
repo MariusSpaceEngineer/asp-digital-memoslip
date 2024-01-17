@@ -1,0 +1,148 @@
+﻿@page "/login"
+@using Blazored.LocalStorage;
+@using System.Net.Http.Headers;
+@using AspDigitalMemoSlip.Blazor.Models;
+@using DTOClassLibrary.DTO.ErrorHandling;
+@using Microsoft.AspNetCore.Components.Forms
+@using AspDigitalMemoSlip.Blazor.Providers;
+@using DTOClassLibrary.DTO.Authentication;
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ILocalStorageService localStorage
+@inject IConfiguration Configuration
+@inject IJSRuntime JSRuntime
+
+
+<div class="container">
+    <EditForm Model="loginModel" OnValidSubmit="HandleLogin" class="form-group">
+        <label for="username" class="form-label">Username</label>
+        <InputText id="username" @bind-Value="loginModel.Username" class="form-control" />
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-group">
+                <InputText id="password" @bind-Value="loginModel.Password" type="password" class="form-control" />
+                <div class="input-group-append">
+                    <button type="button" @onclick="TogglePasswordVisibility" class="btn btn-outline-secondary">
+                        <i class="@passwordIcon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (showMfaField)
+        {
+            <label for="mfa" class="form-label">Multi-Factor Code:</label>
+            <InputText id="mfa" @bind-Value="loginModel.OTCode" class="form-control" />
+        }
+        @if (!string.IsNullOrEmpty(errorResponse))
+        {
+            <div class="alert alert-danger text-center mt-2" role="alert">
+                @((MarkupString)errorResponse)
+            </div>
+        }
+
+        <button type="submit" class="btn btn-primary mt-2">Login</button>
+        <button type="button" @onclick="ToggleMfaField" class="btn btn-secondary mt-2">Login with MFA</button>
+    </EditForm>
+</div>
+
+@code {
+    public LoginDTO loginModel = new LoginDTO();
+    public bool showMfaField = false;
+    string responseMessage = "";
+    public string? errorResponse;
+    private string passwordIcon = "fas fa-eye";
+    private bool visiblePassword = false;
+
+
+    private async Task HandleLogin()
+    {
+        var fullUrl = $"{Http.BaseAddress}/Authentication/login";
+
+        var response = await PostLoginData(fullUrl, loginModel);
+        if (response.IsSuccessStatusCode)
+        {
+            await HandleSuccessfulResponse(response);
+        }
+        else
+        {
+            await HandleErrorResponse(response);
+        }
+    }
+
+    private async Task<HttpResponseMessage> PostLoginData(string url, LoginDTO loginModel)
+    {
+        return await Http.PostAsJsonAsync(url, loginModel);
+    }
+
+    private async Task HandleSuccessfulResponse(HttpResponseMessage response)
+    {
+        if (response.Headers.TryGetValues("Authorization", out var headers))
+        {
+            await HandleToken(headers);
+
+            // Notify the AuthenticationStateProvider that the user has logged in
+            var authStateProvider = (ApplicationAuthenticationStateProvider)AuthenticationStateProvider;
+            authStateProvider.NotifyUserAuthentication(loginModel.Username);
+
+            Navigation.NavigateTo("/userdetails");
+        }
+    }
+
+    private async Task HandleToken(IEnumerable<string> headers)
+    {
+        var token = await ExtractToken(headers);
+        await StoreToken(token);
+    }
+
+    private async Task<string> ExtractToken(IEnumerable<string> headers)
+    {
+        return headers.First().Replace("Bearer ", string.Empty);
+    }
+
+    private async Task StoreToken(string token)
+    {
+        await localStorage.SetItemAsync("authToken", token);
+    }
+
+    private async Task HandleErrorResponse(HttpResponseMessage response)
+    {
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var responseObject = System.Text.Json.JsonSerializer.Deserialize<ErrorResponse>(responseContent);
+
+        errorResponse = FormatMessages(responseObject.Message);
+    }
+
+    private string FormatMessages(string message)
+    {
+        var messages = message.Split("--");
+        var formattedMessages = messages.Select(msg =>
+        {
+            var parts = msg.Split(":");
+            return parts.Length > 1 ? parts[1].Split("Severity")[0].Trim() : "";
+        });
+
+        return string.Join("<br>", formattedMessages.Where(msg => !string.IsNullOrEmpty(msg)));
+    }
+
+    private void ToggleMfaField()
+    {
+        showMfaField = !showMfaField;
+    }
+
+    private async Task TogglePasswordVisibility()
+    {
+        var passwordFieldType = await JSRuntime.InvokeAsync<string>("togglePasswordVisibility", "password");
+        visiblePassword = !visiblePassword;
+        if (visiblePassword)
+        {
+            passwordIcon = "fas fa-eye-slash";
+        }
+        else
+        {
+            passwordIcon = "fas fa-eye";
+        }
+    }
+
+}

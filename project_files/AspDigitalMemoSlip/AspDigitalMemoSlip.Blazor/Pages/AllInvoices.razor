@@ -1,0 +1,232 @@
+﻿@page "/AllInvoices"
+@using DTOClassLibrary.DTO.Invoice
+@using DTOClassLibrary.DTO
+@using System.Text;
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Authorization
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+
+@attribute [Authorize]
+
+<AuthorizeView>
+    <Authorized>
+<h3>All Invoices</h3>
+
+@if (Invoices != null)
+{
+    <table class="table">
+        <tbody>
+            @foreach (var invoice in Invoices)
+            {
+                
+                <tr>
+                    <td>@invoice.Id</td>
+                    <td>@invoice.MemoId</td>
+                    <td>@invoice.Date.ToShortDateString()</td>
+                    <td>@invoice.Total</td>
+                    <td>@invoice.Commision</td>
+                    <td>@invoice.CommisionStatus</td>
+                    <td>@(invoice.Consignee != null ? invoice.Consignee.Name : "N/A")</td>
+                    <td>@(invoice.Consigner != null ? invoice.Consigner.Name : "N/A")</td>
+                    <td>
+                        @if (invoice.SaleConfirmation != null)
+                        {
+                            @foreach (var confirmation in invoice.SaleConfirmation)
+                            {
+                                <div>
+                                    
+                                    <p>ID: @confirmation.Id</p>
+                                    <p>Consignee ID: @confirmation.ConsigneeId</p>
+                                    <p>Created Date: @confirmation.CreatedDate.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")</p>
+                                    <p>Total Sales Price: @confirmation.TotalSalesPrice</p>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <span>No Sale Confirmations</span>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (CurrentConversionRate != null)
+            {
+                <h1>Current EUR/USD conversion rate: @CurrentConversionRate</h1>
+            }
+            <button @onclick="GeneratePdf">Generate PDF</button>
+        </tbody>
+    </table>
+
+
+
+}
+else
+{
+    <p>Loading...</p>
+}
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center">
+            <p class="text-danger" style="font-size: 1.5rem;">Unauthorized. Please log in.</p>
+            <div class="button">
+                <a class="btn btn-primary btn-lg" href="/login">Login</a>
+            </div>
+        </div>
+
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private List<InvoiceDTO> Invoices;
+    private string CurrentConversionRate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var httpClient = new HttpClient();
+
+        try
+        {
+            var response = await httpClient.GetAsync($"{Http.BaseAddress}/GetAllInvoice?pageNr=1&pageSize=10");
+
+            if (response.IsSuccessStatusCode)
+            {
+                Invoices = await response.Content.ReadFromJsonAsync<List<InvoiceDTO>>();
+            }
+            else
+            {
+                Console.WriteLine($"Error: {response.StatusCode}");
+            }
+
+            var conversionRateResponse = await httpClient.GetAsync($"{Http.BaseAddress}/GetCurrentConversionRate");
+
+            if (conversionRateResponse.IsSuccessStatusCode)
+            {
+                CurrentConversionRate = await conversionRateResponse.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                Console.WriteLine($"Error getting conversion rate: {conversionRateResponse.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+        }
+        finally
+        {
+            httpClient.Dispose();
+        }
+    }
+
+    private async Task GeneratePdf()
+    {
+        try
+        {
+           
+            string htmlContent = "<html><head></head><body>" + RenderTable() + "</body></html>";
+
+        
+            var windowObjectReference = await JSRuntime.InvokeAsync<IJSObjectReference>("open", "about:blank", "_blank");
+
+            
+            await JSRuntime.InvokeVoidAsync("writeToWindow", windowObjectReference, htmlContent);
+
+          
+            await JSRuntime.InvokeVoidAsync("generatePdf", windowObjectReference);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"PDF generation error: {ex.Message}");
+        }
+    }
+
+    // Helper method to render the table as HTML
+    private string RenderTable()
+    {
+        if (Invoices != null)
+        {
+            StringBuilder htmlTable = new StringBuilder();
+
+            // Table structure
+            htmlTable.AppendLine("<table class=\"table\">");
+            htmlTable.AppendLine("<tbody>");
+
+            // Data rows for the table
+            foreach (var invoice in Invoices)
+            {
+                // Additional HTML content for each invoice
+                htmlTable.AppendLine("<tr>");
+                htmlTable.AppendLine("<td colspan=\"7\" style=\"text-align: center;\">");
+                htmlTable.AppendLine($"<h1>{invoice.Consignee.Name}</h1>");
+                htmlTable.AppendLine("<div>");
+                htmlTable.AppendLine($"<p>{invoice.Consignee.Name}</p>");
+                htmlTable.AppendLine($"<p>{invoice.Consignee.PhoneNumber}</p>");
+                htmlTable.AppendLine($"<p>{invoice.Consignee.Email}</p>");
+                htmlTable.AppendLine("</div>");
+                htmlTable.AppendLine("<div style=\"float: left;\">");
+                htmlTable.AppendLine("<h1>Bill to</h1>");
+                htmlTable.AppendLine($"<p>{invoice.Consigner.Name}</p>");
+                htmlTable.AppendLine($"<p>{invoice.Consigner.PhoneNumber}</p>");
+                htmlTable.AppendLine($"<p>{invoice.Consigner.Email}</p>");
+                htmlTable.AppendLine("</div>");
+                htmlTable.AppendLine("<div style=\"float: right;\">");
+                htmlTable.AppendLine("<h1>For</h1>");
+                htmlTable.AppendLine($"<p>Date of today: {DateTime.Now.ToString("dd/MM/yy")}</p>");
+                htmlTable.AppendLine("</div>");
+                htmlTable.AppendLine("</td>");
+                htmlTable.AppendLine("</tr>");
+
+                // Table headers for Sale Confirmation make this acros the page from left to rigt
+                htmlTable.AppendLine("<tr>");
+                htmlTable.AppendLine("<td>COMMISSION FOR INVOICES WITH REF</td>");
+                htmlTable.AppendLine("<td>COMMISSION %</td>");
+                htmlTable.AppendLine("<td>COMMISSION AMOUNT (USD)</td>");
+                htmlTable.AppendLine("</tr>");
+
+                // Data row for Sale Confirmation
+              
+
+                foreach (var confirmation in invoice.SaleConfirmation)
+                {
+                    htmlTable.AppendLine("<tr>");
+                    
+                    htmlTable.AppendLine($"<td>{confirmation.Id.ToString()+"  " +confirmation.CreatedDate}</td>");
+                    htmlTable.AppendLine($"<td>{confirmation.TotalSalesPrice}</td>");
+                    htmlTable.AppendLine($"<td>{confirmation.TotalSalesPrice}</td>");
+            
+                    htmlTable.AppendLine("<td>");
+                }
+
+
+
+                htmlTable.AppendLine("</td>");
+                htmlTable.AppendLine("</tr>");
+            }
+
+            htmlTable.AppendLine("</tbody>");
+            htmlTable.AppendLine("</table>");
+
+            return htmlTable.ToString();
+        }
+        else
+        {
+            return "No invoices available.";
+        }
+    }
+
+
+
+
+}
+<script>
+    window.writeToWindow = function (windowObjectReference, htmlContent) {
+        windowObjectReference.document.write(htmlContent);
+    };
+
+    window.generatePdf = function (windowObjectReference) {
+        windowObjectReference.document.close();
+        windowObjectReference.print();
+    };
+</script>

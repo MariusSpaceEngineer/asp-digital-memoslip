@@ -1,0 +1,271 @@
+﻿@page "/salesconfirmation"
+@inject HttpClient Http
+@using DTOClassLibrary.DTO
+@using DTOClassLibrary.DTO.ProductSale;
+@using DTOClassLibrary.DTO.SalesConfirmation;
+@using DTOClassLibrary.Enums;
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
+
+<style>
+    body, h3, .card-text, .btn {
+        font-family: 'Roboto', sans-serif;
+    }
+
+    .card-header {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-link {
+        color: #0d6efd;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    .total-price {
+        font-size: 1.5rem; 
+        color: #dc3545;
+    }
+
+    .product-details {
+        font-size: 1.2rem; 
+        color: #6c757d;
+    }
+
+    .consignee-name {
+        font-size: 1.3rem; 
+        font-weight: bold;
+        color: #343a40;
+    }
+
+    .card-text strong {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .badge-custom {
+        font-size: 0.9rem;
+        padding: 0.4em 0.75em;
+    }
+
+    .custom-button {
+        margin-top: 15px;
+    }
+
+    .custom-badge {
+        font-size: 0.8rem;
+        margin-left: 10px;
+    }
+
+    .edit-input {
+        width: auto;
+        display: inline-block;
+        margin-right: 10px;
+    }
+
+    .total-commission, .commission-percentage {
+        font-size: 1.4rem; 
+        color: #dc3545; 
+        font-weight: bold; 
+    }
+ 
+</style>
+
+<AuthorizeView>
+    <Authorized>
+<h3 class="mt-4 text-center">Sales Confirmations</h3>
+<div class="container mt-4">
+    @if (salesConfirmations != null && salesConfirmations.Any())
+    {
+        @foreach (var item in salesConfirmations)
+        {
+            <div class="card mb-3">
+                <div class="card-header">
+                    Sales Confirmation # @item.Id
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-lg-6 col-md-12 mb-3">
+                            <p class="card-text"><strong>Created Date:</strong> <p class="total-commission">@item.CreatedDate.ToString("MM/dd/yyyy")</p></p>
+                            <p class="card-text"><strong>Consignee:</strong> <span class="consignee-name">@item.ConsigneeName</span></p>
+                        </div>
+                        <div class="col-lg-6 col-md-12">
+                            <p class="card-text"><strong>Total Sales Price:</strong> <span class="total-price">$@item.TotalSalesPrice.ToString("0.00")</span></p>
+                            <p class="card-text"><strong>Total Commission:</strong> <span class="total-commission">$@item.CommissionAmount</span></p>
+                            <p class="card-text"><strong>Commission Percentage:</strong> <span class="commission-percentage">@item.SuggestedCommision%</span></p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            @if (item.SalesConfirmationState == SalesConfirmationState.CREATED)
+                            {
+                                <span class="badge bg-success badge-custom">To be confirmed by the consigner</span>
+                            }
+                            else if (item.SalesConfirmationState == SalesConfirmationState.EDITEDBYCONSIGNER)
+                            {
+                                <span class="badge bg-warning text-dark badge-custom">Marked by the consigner to be edited</span>
+                            }
+                            else if (item.SalesConfirmationState == SalesConfirmationState.APPROVED)
+                            {
+                                <span class="badge bg-success badge-custom">Approved</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <button class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#productsCollapse_@item.Id">Show Products</button>
+                            <div class="collapse" id="productsCollapse_@item.Id">
+                                <ul class="list-group">
+                                    @if (item.SoldProducts != null)
+                                    {
+                                        @foreach (var product in item.SoldProducts)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-center product-details">
+                                                <span>
+                                                    <strong>Product Price:</strong> $@product.SalePrice.ToString("0.00") |
+                                                    <strong>Carats Sold:</strong> @product.CaratsSold
+                                                </span>
+                                                @if (product.AgreementStates == AgreementState.CounterPrice && item.SalesConfirmationState != SalesConfirmationState.CONFIRMCONSIGNER)
+                                                {
+                                                    @if (!product.isEditing)
+                                                    {
+                                                        <button class="btn btn-outline-primary btn-sm" @onclick="() => ToggleEditState(product)">Edit Price</button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="number" class="form-control edit-input" @bind="@product.NewPrice" placeholder="Enter new price">
+                                                        <button class="btn btn-primary btn-sm" @onclick="() => ConfirmPriceChange(product, product.NewPrice)">Confirm</button>
+                                                    }
+                                                }
+                                                @if (product.AgreementStates == AgreementState.Agreed)
+                                                {
+                                                    <span class="badge bg-success custom-badge"><i class="fas fa-check"></i> Agreed</span>
+                                                }
+                                                @if (product.AgreementStates == AgreementState.SuggestedPrice)
+                                                {
+                                                    <span class="badge bg-primary custom-badge"><i class="fas fa-check"></i> Sent for approval</span>
+                                                }
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        @if (item.SalesConfirmationState == SalesConfirmationState.CONFIRMCONSIGNER)
+                        {
+                            <div class="col-md-12 text-right">
+                                <span class="badge bg-success custom-badge"><i class="fas fa-check"></i> Approved by consigner</span>
+                            </div>
+                        }
+                        @if (item.SalesConfirmationState == SalesConfirmationState.EDITEDBYCONSIGNER)
+                        {
+                            <div class="col-md-12 text-right">
+                                <button class="btn btn-success custom-button" @onclick="() => ConfirmAllChanges(item.Id)">Confirm All Changes</button>
+                            </div>
+                        }
+                        @if (item.SalesConfirmationState == SalesConfirmationState.CONFIRMCONSIGNER || item.SalesConfirmationState == SalesConfirmationState.EDITEDBYCONSIGNER)
+                        {
+                            <div class="col-md-12 text-right">
+                                <button class="btn btn-primary custom-button" @onclick="() => ApproveSalesConfirmation(item.Id)">Approve sales</button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <p class="text-center">No sales confirmations available.</p>
+    }
+</div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center">
+            <p class="text-danger" style="font-size: 1.5rem;">Unauthorized. Please log in.</p>
+            <div class="button">
+                <a class="btn btn-primary btn-lg" href="/login">Login</a>
+            </div>
+        </div>
+
+    </NotAuthorized>
+</AuthorizeView>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+@code {
+    private string getSalesConfirmationUrl = "https://localhost:7001/api/SalesConfirmation";
+    private List<SalesConfirmationDTO> salesConfirmations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            salesConfirmations = await Http.GetFromJsonAsync<List<SalesConfirmationDTO>>(getSalesConfirmationUrl);
+            Console.WriteLine(salesConfirmations);
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception (e.g., log it, display an error message)
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    private async void ConfirmAllChanges(int salesConfirmationId)
+    {
+        SalesConfirmationDTO salesConfirmationDTO = salesConfirmations.Find(s => s.Id == salesConfirmationId);
+        if (salesConfirmationDTO != null)
+        {
+            var result = await Http.PostAsJsonAsync($"{Http.BaseAddress}/SalesConfirmation/update", salesConfirmationDTO);
+
+            if (result.IsSuccessStatusCode)
+            {
+                Console.WriteLine("succes veranderd");
+            }
+            else
+            {
+                Console.WriteLine("fout");
+            }
+        }
+    }
+
+    private async void ApproveSalesConfirmation(int salesConfirmationId)
+    {
+        SalesConfirmationDTO salesConfirmationDTO = salesConfirmations.Find(s => s.Id == salesConfirmationId);
+        if (salesConfirmationDTO != null)
+        {
+            var url = $"{Http.BaseAddress}/SalesConfirmation/approve/{salesConfirmationId}";
+
+            var result = await Http.PatchAsync(url, new StringContent(""));
+
+            if (result.IsSuccessStatusCode)
+            {
+                Console.WriteLine("succes veranderd");
+            }
+            else
+            {
+                Console.WriteLine("fout");
+            }
+        }
+    }
+    private void ToggleEditState(ProductSaleDTO product)
+    {
+        product.isEditing = !product.isEditing;
+    }
+
+    private void ConfirmPriceChange(ProductSaleDTO product, int newPrice)
+    {
+        product.SalePrice = newPrice;
+        product.isEditing = false;
+        product.AgreementStates = AgreementState.SuggestedPrice;
+        StateHasChanged();
+    }
+}

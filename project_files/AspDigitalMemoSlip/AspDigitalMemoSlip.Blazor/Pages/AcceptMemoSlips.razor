@@ -1,0 +1,294 @@
+﻿@page "/AcceptMemoSlips"
+@using System.Text.Json;
+@using DTOClassLibrary.DTO.Consignee;
+@using Microsoft.AspNetCore.Authorization
+@using DTOClassLibrary.DTO.Product;
+@using DTOClassLibrary.DTO.Memo
+@using Microsoft.AspNetCore.WebUtilities
+@using Blazored.LocalStorage
+@using System.Text
+@inject HttpClient Http
+@inject IModalService Modal
+@attribute [Authorize]
+
+@inject ILocalStorageService localStorage
+
+
+
+
+@code {
+
+
+
+    private List<MemoDTO> memos;
+    private AcceptMemoDTO acceptMemo = new AcceptMemoDTO();
+    private string userId;
+    private string consigneeId;
+
+
+    private string DisplayProducts(List<ProductDTO> products)
+    {
+        if (products == null || !products.Any())
+            return "No products";
+
+        return string.Join(", ", products.Select(p =>
+            $"{p.Description} (Carats: {p.Carat}, Price: ${p.Price}, Remarks: {p.Remarks})"));
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetConsigneeId();
+        await LoadMemos();
+    }
+
+    private async Task GetConsigneeId()
+    {
+        var token = await localStorage.GetItemAsync<string>("authToken");
+        if (!string.IsNullOrEmpty(token))
+        {
+            var parts = token.Split('.');
+            if (parts.Length == 3)
+            {
+                var payload = parts[1];
+                var jsonPayload = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(payload));
+                var claims = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonPayload);
+                userId = claims["nameid"].ToString();
+            }
+
+            var absoluteUrl = $"{Http.BaseAddress}/Consignee/GetConsigneeByUserId/{userId}";
+
+            try
+            {
+                var consignee = await Http.GetFromJsonAsync<ConsigneeDTO>(absoluteUrl);
+                if (consignee != null)
+                {
+                    consigneeId = consignee.Id;
+                    Console.WriteLine("Consignee Id detected as: " + consigneeId);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching consignee: {ex.Message}");
+            }
+        }
+    }
+
+
+    private async Task LoadMemos()
+    {
+        try
+        {
+            // Temporarily using the absolute URL for testing
+            var absoluteUrl = $"{Http.BaseAddress}/Memo/byConsignee/";
+            absoluteUrl = absoluteUrl + consigneeId;
+            var allMemos = await Http.GetFromJsonAsync<List<MemoDTO>>(absoluteUrl);
+            memos = allMemos.Where(m => !m.AcceptedByConsignee).ToList();
+            StateHasChanged();
+        }
+        catch (HttpRequestException httpEx)
+        {
+            Console.WriteLine($"HTTP Request error fetching memos: {httpEx.Message}");
+        }
+        catch (JsonException jsonEx)
+        {
+            Console.WriteLine($"JSON Parsing error fetching memos: {jsonEx.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching memos: {ex.Message}");
+        }
+    }
+
+    private async Task AcceptMemo(int memoId)
+    {
+        acceptMemo.Id = memoId;
+        var parameters = new ModalParameters();
+        parameters.Add("Memo", acceptMemo);
+
+        var modal = Modal.Show<AcceptMemoModal>("Enter Password:", parameters);
+        var result = await modal.Result;
+
+        if (!result.Cancelled)
+        {
+            acceptMemo = (AcceptMemoDTO)result.Data;
+
+            try
+            {
+                var fullUrl = $"{Http.BaseAddress}/Memo/accept";
+
+                var response = await Http.PostAsJsonAsync(fullUrl, acceptMemo);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new InvalidOperationException("Failed to accept the memo.");
+                }
+                else
+                {
+                    await LoadMemos();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error accepting memo: {ex.Message}");
+            }
+        }
+    }
+
+
+    private async Task DeclineMemo(MemoDTO memo)
+    {
+        try
+        {
+            // Absolute URL for testing
+            var url = $"{Http.BaseAddress}/Memo/{memo.Id}/decline";
+            var response = await Http.PostAsync(url, null);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException("Failed to decline the memo.");
+            }
+            else
+            {
+                Console.WriteLine($"Memo {memo.Id} declined successfully.");
+                await LoadMemos();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error declining memo: {ex.Message}");
+        }
+
+
+    }
+
+
+
+
+}
+
+@* Include Font Awesome for icons *@
+<link href="https://use.fontawesome.com/releases/v5.15.1/css/all.css" rel="stylesheet">
+
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+<AuthorizeView>
+    <Authorized>
+        <h3>Pending Memo slip proposals:</h3>
+
+        @if (memos == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else if (!memos.Any())
+        {
+            <p><em>No memo slips found.</em></p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="thead-light">
+                        <tr>
+                            <th class="d-none d-md-table-cell">Id</th>
+                            <th>Products</th>
+                            <th class="d-none d-sm-table-cell">Consigner</th>
+                            <th>Consignee</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var memo in memos.Where(m => !m.AcceptedByConsignee))
+                        {
+                            <tr>
+                                <td class="d-none d-md-table-cell">@memo.Id</td>
+                                <td>
+                                    @if (memo.Products.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-sm mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Description</th>
+                                                        <th class="d-none d-lg-table-cell">Carat</th>
+                                                        <th>Price</th>
+                                                        <th class="d-lg-none">Details</th>
+                                                        <th class="d-none d-lg-table-cell">Remarks</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var product in memo.Products)
+                                                    {
+                                                        <tr>
+                                                            <td>@product.Description</td>
+                                                            <td class="d-none d-lg-table-cell">@product.Carat</td>
+                                                            <td>@product.Price eur</td>
+                                                            <td class="d-lg-none">
+                                                                <button class="btn btn-info btn-sm" type="button" data-toggle="collapse" data-target="#collapseRemarks-@product.ID" aria-expanded="false" aria-controls="collapseRemarks">
+                                                                    View
+                                                                </button>
+                                                            </td>
+                                                            <td class="d-none d-lg-table-cell">@product.Remarks</td>
+                                                        </tr>
+                                                        <tr class="d-lg-none">
+                                                            <td colspan="4">
+                                                                <div class="collapse" id="collapseRemarks-@product.ID">
+                                                                    <div class="card card-body">
+                                                                        @product.Remarks
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <text>No products</text>
+                                    }
+                                </td>
+                                <td class="d-none d-sm-table-cell">Dev Jewels</td>
+                                <td>@memo.Consignee?.Name</td>
+                                <td>
+                                    <div class="btn-group" role="group" aria-label="Basic example">
+                                        <button class="btn btn-primary btn-sm d-none d-md-inline-block" @onclick="() => AcceptMemo(memo.Id)">Accept</button>
+                                        <button class="btn btn-danger btn-sm d-none d-md-inline-block" @onclick="() => DeclineMemo(memo)">Decline</button>
+
+                                        @* For smaller screens, use icon buttons *@
+                                        <button class="btn btn-primary btn-sm d-md-none" @onclick="() => AcceptMemo(memo.Id)">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm d-md-none" @onclick="() => DeclineMemo(memo)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center">
+            <p class="text-danger" style="font-size: 1.5rem;">Unauthorized. Please log in.</p>
+            <div class="button">
+                <a class="btn btn-primary btn-lg" href="/login">Login</a>
+            </div>
+        </div>
+
+    </NotAuthorized>
+</AuthorizeView>
+
+
+
+
+
+
+
+
+
+
