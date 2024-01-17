@@ -88,7 +88,8 @@ else
 
         try
         {
-            var response = await httpClient.GetAsync($"{Http.BaseAddress}/GetAllInvoice?pageNr=1&pageSize=10");
+            var response = await httpClient.GetAsync("https://localhost:7001/GetAllInvoice?pageNr=1&pageSize=10");
+
 
             if (response.IsSuccessStatusCode)
             {
