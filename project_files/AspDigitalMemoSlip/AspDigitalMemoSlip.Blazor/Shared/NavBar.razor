@@ -2,13 +2,14 @@
 @inject NavigationManager NavigationManager
 
 @code {
-    private bool isMenuOpen = false;
+    private bool isMenuOpen = true;
 
     private string menuStyle => isMenuOpen ? "display: block;" : "display: none;";
 
     private void ToggleMenu()
     {
         isMenuOpen = !isMenuOpen;
+
     }
 
     private async Task RemoveLocalStorageKey(string key)
@@ -125,6 +126,7 @@
     }
 
     body .button-container {
+        display:flex;
     }
 
     body .nav-link {
@@ -180,6 +182,35 @@
     body .button-container .button .nav-link p {
         margin: 0;
         margin-left: 10px;
+    }
+ @@media (min-width: 768px) {
+        body .nav-icon {
+            display: none;
+        }
+
+        body .menu-items-container {
+            display: flex;
+        }
+
+        body .menu-items {
+            flex-direction: row;
+        }
+
+        
+    }
+
+    @@media (max-width: 767px) {
+        body .nav-icon {
+            display: block;
+        }
+
+        body .menu-items-container {
+            display: none;
+        }
+
+        body .button-container {
+            flex-direction: column;
+        }
     }
 </style>
 

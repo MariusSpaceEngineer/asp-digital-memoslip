@@ -16,7 +16,7 @@
 
 @if (Invoices != null)
 {
-    <table class="table">
+    <table class="table table-striped">
         <tbody>
             @foreach (var invoice in Invoices)
             {
@@ -41,6 +41,7 @@
                                     <p>Consignee ID: @confirmation.ConsigneeId</p>
                                     <p>Created Date: @confirmation.CreatedDate.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")</p>
                                     <p>Total Sales Price: @confirmation.TotalSalesPrice</p>
+                                    <button class="btn btn-primary" @onclick="GeneratePdf">Generate PDF</button>
                                 </div>
                             }
                         }
@@ -55,7 +56,7 @@
             {
                 <h1>Current EUR/USD conversion rate: @CurrentConversionRate</h1>
             }
-            <button @onclick="GeneratePdf">Generate PDF</button>
+                   
         </tbody>
     </table>
 
