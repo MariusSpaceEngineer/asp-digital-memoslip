@@ -35,7 +35,7 @@ namespace AspDigitalMemoSlip.Application
         private DateTime ParseDate(string date)
         {
             DateTime dateValue;
-            string[] formats = { "d-M-yyyy", "M/d/yyyy", "dd-MM-yyyy", "MM/dd/yyyy", "yyyy-MM-dd", "MM-dd-yyyy", "M-d-yyyy", "yyyy/M/d"};
+            string[] formats = { "d-M-yyyy", "M/d/yyyy", "dd-MM-yyyy", "MM/dd/yyyy", "yyyy-MM-dd", "MM-dd-yyyy", "M-d-yyyy", "yyyy/M/d", "dd/MM/yyyy"};
             if (DateTime.TryParseExact(date, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateValue))
             {
                 return dateValue;

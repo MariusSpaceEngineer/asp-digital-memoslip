@@ -51,7 +51,7 @@
 
             RuleFor(x => x.Dto.NationalRegistryExpirationDate)
                 .NotEmpty().WithMessage("National registry expirationDate is required.")
-                .Must(BeAValidDate).WithMessage("National registry expirationDate must be a valid date.");
+                .Must(BeAValidDate).WithMessage("National registry expiration date must be a valid date.");
 
             RuleFor(x => x.Dto.Selfie)
                 .NotNull().WithMessage("Selfie is required.")
@@ -66,7 +66,7 @@
         }
         private bool BeAValidDate(string dateString)
         {
-            var allowedFormats = new[] { "d-M-yyyy", "M/d/yyyy", "dd-MM-yyyy", "MM/dd/yyyy", "yyyy-MM-dd", "MM-dd-yyyy", "M-d-yyyy", "yyyy/M/d" };
+            var allowedFormats = new[] { "d-M-yyyy", "M/d/yyyy", "dd-MM-yyyy", "MM/dd/yyyy", "yyyy-MM-dd", "MM-dd-yyyy", "M-d-yyyy", "yyyy/M/d", "dd/MM/yyyy" };
             return DateTime.TryParseExact(dateString, allowedFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
         }
 
