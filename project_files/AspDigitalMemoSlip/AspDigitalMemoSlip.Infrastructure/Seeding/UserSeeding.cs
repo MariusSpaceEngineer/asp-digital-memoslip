@@ -52,20 +52,9 @@ namespace AspDigitalMemoSlip.Infrastructure.Seeding
                 Name = "Consigner",
                 PhoneNumber = "1234567890",
                 Email = "consigner1@example.com",
+                NormalizedEmail = "CONSIGNER1@EXAMPLE.COM",
                 PasswordHash = hasher.HashPassword(null, "Password123!")
             };
-
-            var consignerUser2 = new Consigner
-            {
-                Id = "341743f0-asd2–42de-afbf-59kmkkmk72cf7", // Use the UserId as the primary key
-                UserName = "DevGems", // Use the UserName property from the User class
-                NormalizedUserName = "DEVGEMS",
-                Name = "Consigner2",
-                PhoneNumber = "0987654321",
-                Email = "consigner2@example.com",
-                PasswordHash = hasher.HashPassword(null, "Password123!")
-            };
-
 
             var consigneeUser = new Consignee
             {
@@ -73,13 +62,13 @@ namespace AspDigitalMemoSlip.Infrastructure.Seeding
                 UserName = "Consignee1", // Use the UserName property from the User class
                 NormalizedUserName = "CONSIGNEE1",
                 Name = "Thomas Derwaal",
-                PhoneNumber = "1234567890",
+                PhoneNumber = "0489567257",
                 Email = "consignee1@example.com",
                 PasswordHash = hasher.HashPassword(null, "Password123!"),
-                NationalRegistryNumber = "123456789",
+                NationalRegistryNumber = "43545634596",
                 NationalRegistryExpirationDate = DateTime.Now.AddYears(1),
-                VATNumber = "BTW123",
-                InsuranceNumber = "Insurance123",
+                VATNumber = "BE0123456789",
+                InsuranceNumber = "12345678910",
                 InsuranceCoverage = 23.6,
                 AcceptedByConsigner = true, // The user is not activated
                 ConsignerId = consignerUser.Id, // Link the consignee to the consigner
@@ -91,13 +80,13 @@ namespace AspDigitalMemoSlip.Infrastructure.Seeding
                 UserName = "Consignee2", // Use a different UserName
                 NormalizedUserName = "CONSIGNEE2",
                 Name = "Jef Jefsensen",
-                PhoneNumber = "0987654321",
+                PhoneNumber = "0485526317",
                 Email = "consignee2@example.com",
                 PasswordHash = hasher.HashPassword(null, "Password123!"),
-                NationalRegistryNumber = "987654321",
+                NationalRegistryNumber = "48684235796",
                 NationalRegistryExpirationDate = DateTime.Now.AddYears(1),
-                VATNumber = "BTW456",
-                InsuranceNumber = "Insurance456",
+                VATNumber = "BE0123457895",
+                InsuranceNumber = "12349878985",
                 InsuranceCoverage = 23.6,
                 AcceptedByConsigner = false, // The user is not activated
                 ConsignerId = consignerUser.Id, // Link the consignee to the same consigner
@@ -105,7 +94,6 @@ namespace AspDigitalMemoSlip.Infrastructure.Seeding
 
 
             modelBuilder.Entity<Consigner>().HasData(consignerUser);
-            modelBuilder.Entity<Consigner>().HasData(consignerUser2);
             modelBuilder.Entity<Consignee>().HasData(consigneeUser);
             modelBuilder.Entity<Consignee>().HasData(consigneeUser2);
 
@@ -125,12 +113,6 @@ namespace AspDigitalMemoSlip.Infrastructure.Seeding
             modelBuilder.Entity<IdentityUserRole<string>>().HasData(new IdentityUserRole<string>
             {
                 UserId = consignerUser.Id,
-                RoleId = "1"
-            });
-
-            modelBuilder.Entity<IdentityUserRole<string>>().HasData(new IdentityUserRole<string>
-            {
-                UserId = consignerUser2.Id,
                 RoleId = "1"
             });
         }

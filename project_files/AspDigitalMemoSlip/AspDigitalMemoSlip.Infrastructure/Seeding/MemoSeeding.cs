@@ -23,7 +23,7 @@ namespace AspDigitalMemoSlip.Infrastructure.Seeding
                 TermsAndConditionsId = 1,
                 TermsAccepted = true,
                 ConsigneeId = "02174cf0–9412–4cfe-afbf-59f706d72cf6", // Replace with actual ConsigneeId
-                ConsignerId = "341743f0-asd2–42de-afbf-59kmkkmk72cf7", // Replace with actual ConsignerId
+                ConsignerId = "341743f0-asd2–42de-afbf-59kmkkmk72cf6", // Replace with actual ConsignerId
                 CreateDate = DateTime.Now,
                 AcceptedByConsignee = false,
             });
