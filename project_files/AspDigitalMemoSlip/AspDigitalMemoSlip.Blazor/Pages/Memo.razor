@@ -60,14 +60,14 @@
                                     @if (item.State != 0)
                                     {
                                     <td>
-                                        <i class="bi bi-info-circle-fill">opmerking geplaatst</i>
+                                        <i class="bi bi-info-circle-fill">Remark Placed</i>
                                     </td>
                                     }
                                     else
                                     {
                                     <td>
                                         <button @onclick="() => SetSelectedProductId(item.ID)" type="button" class="btn btn-primary" data-toggle="modal" data-target="#changestatemodel">
-                                            Opmerking
+                                            Remark
                                         </button>
                                     </td>
                                     }
@@ -79,7 +79,7 @@
                 }
                 else
                 {
-                    <p>Deze memo bevat geen producten</p>
+                    <p>This Memo doesn't contain products.</p>
                 }
             </div>
         </div>
@@ -93,7 +93,7 @@
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLongTitle">Opmerking toevoegen</h5>
+                    <h5 class="modal-title" id="exampleModalLongTitle">Add Remark</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -101,11 +101,11 @@
                 <div class="modal-body">
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="STOLEN" @onchange="() => UpdateProductState(ProductState.Stolen)">
-                        <label class="form-check-label" for="inlineCheckbox1">Het product is gestolen</label>
+                        <label class="form-check-label" for="inlineCheckbox1">The product was stolen</label>
                         <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="RETURNED" @onchange="() => UpdateProductState(ProductState.Returned)">
-                        <label class="form-check-label" for="inlineCheckbox1">Het product is teruggestuurd</label>
+                        <label class="form-check-label" for="inlineCheckbox1">The product was returned</label>
                         <input class="form-check-input" type="checkbox" id="inlineCheckbox1" value="LOST" @onchange="() => UpdateProductState(ProductState.Lost)">
-                        <label class="form-check-label" for="inlineCheckbox1">Het product is verloren</label>
+                        <label class="form-check-label" for="inlineCheckbox1">The product was lost</label>
                     </div>
                 </div>
                 <p class="warning">
@@ -113,15 +113,15 @@
                         switch (State)
                         {
                             case ProductState.Stolen:
-                                <text>Dit product wordt gemarkeerd als gestolen. Bent u zeker?</text>
+                                <text>This product will be marked as stolen. Are you sure?</text>
                                 ;
                                 break;
                             case ProductState.Returned:
-                                <text>Dit product wordt gemarkeerd als teruggestuurd. Bent u zeker?</text>
+                                <text>This product will be marked as returned. Are you sure?</text>
                                 ;
                                 break;
                             case ProductState.Lost:
-                                <text>Dit product wordt gemarkeerd als verloren. Bent u zeker?</text>
+                                <text>This product will be marked as lost. Are you sure?</text>
                                 ;
                                 break;
                             default:
@@ -130,7 +130,7 @@
                     }
                 </p>
                 <div class="form-group">
-                    <label for="exampleFormControlTextarea1">(optioneel) Opmerking</label>
+                    <label for="exampleFormControlTextarea1">(optional) Comment</label>
                     <textarea @bind ="remarkDes" class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
                 </div>
                 <div class="modal-footer">
