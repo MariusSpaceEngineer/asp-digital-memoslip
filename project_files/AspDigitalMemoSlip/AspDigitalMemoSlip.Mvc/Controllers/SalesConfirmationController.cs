@@ -87,7 +87,7 @@ namespace AspDigitalMemoSlip.Mvc.Controllers
             var response = await _httpClient.PatchAsync("salesconfirmation/approve/"+ salesConfirmationId, content);
             if (response.IsSuccessStatusCode)
             {
-                RedirectToAction("SalesConfirmationAsync");
+                return RedirectToAction("SalesConfirmationAsync");
             }
 
             return null;

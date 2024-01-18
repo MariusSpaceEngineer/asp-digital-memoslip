@@ -21,5 +21,8 @@ namespace DTOClassLibrary.DTO.ProductSale
         public AgreementState AgreementStates { get; set; }
         public bool isEditing { get; set; }
         public int NewPrice { get; set; }
+
+
+        public bool Edited{ get; set; }
     }
 }
