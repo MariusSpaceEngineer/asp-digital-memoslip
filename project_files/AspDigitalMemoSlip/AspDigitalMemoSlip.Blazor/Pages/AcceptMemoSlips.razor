@@ -174,7 +174,27 @@
 
 <AuthorizeView>
     <Authorized>
-        <h3>Pending Memo slip proposals:</h3>
+
+        <style>
+            .pageContainer {
+                width: 100%;
+            }
+
+            @@media screen and (min-width: 769px) {
+                .pageContainer {
+                    width: 80%;
+                    margin: 0 auto;
+                }
+                h3 {
+                    text-align: center;
+                }
+            }
+                    }
+        </style>
+        
+        <h3 >Pending Memo slip proposals:</h3>
+        <div class="pageContainer">
+        
 
         @if (memos == null)
         {
@@ -271,6 +291,7 @@
                 </table>
             </div>
         }
+        </div>
     </Authorized>
     <NotAuthorized>
         <div class="text-center">
