@@ -41,6 +41,7 @@
                                     <p>Consignee ID: @confirmation.ConsigneeId</p>
                                     <p>Created Date: @confirmation.CreatedDate.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")</p>
                                     <p>Total Sales Price: @confirmation.TotalSalesPrice</p>
+                                    <p>Commision: @confirmation.SuggestedCommision % </p>
                                     <button class="btn btn-primary" @onclick="GeneratePdf">Generate PDF</button>
                                 </div>
                             }
@@ -195,7 +196,7 @@ else
                     htmlTable.AppendLine("<tr>");
                     
                     htmlTable.AppendLine($"<td>{confirmation.Id.ToString()+"  " +confirmation.CreatedDate}</td>");
-                    htmlTable.AppendLine($"<td>{confirmation.TotalSalesPrice}</td>");
+                    htmlTable.AppendLine($"<td>{confirmation.SuggestedCommision}</td>");
                     htmlTable.AppendLine($"<td>{confirmation.TotalSalesPrice}</td>");
             
                     htmlTable.AppendLine("<td>");
