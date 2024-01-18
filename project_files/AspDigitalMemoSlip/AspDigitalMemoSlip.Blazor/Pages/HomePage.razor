@@ -21,10 +21,10 @@
                         <a @onclick="() => RedirectToDetailPage(memo.Id)" class="list-group-item list-group-item-action flex-column align-items-start active">
                              <div class="d-flex w-100 justify-content-between">
                                  <h5 class="mb-1">Consigner: @memo.Consigner.Name</h5>
-                                 <small>Aanmaak: @GetDaysAgo(memo.CreateDate)</small>
+                                 <small>Creation date: @GetDaysAgo(memo.CreateDate)</small>
                              </div>
-                             <p class="mb-1">Aantal producten in de memo: @memo.Products.Count</p>
-                             <small>@(memo.TermsAccepted ? "geaccepteerd" : "nog niet geaccepteerd door consigner")</small>
+                             <p class="mb-1">Amount of products in Memoslip: @memo.Products.Count</p>
+                             <small>@(memo.TermsAccepted ? "Accepted" : "Waiting for Consigner's confirmation'")</small>
                          </a>
                      }
                  }
@@ -108,15 +108,15 @@
 
         if (days == 0)
         {
-            return "Vandaag";
+            return "Today";
         }
         else if (days == 1)
         {
-            return "Gisteren";
+            return "Yesterday";
         }
         else
         {
-            return $"{days} dagen geleden";
+            return $"{days} days ago";
         }
     }
      
