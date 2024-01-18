@@ -110,6 +110,14 @@
     </div>
 
 
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+
 
 
     <div class="container mt-4">
