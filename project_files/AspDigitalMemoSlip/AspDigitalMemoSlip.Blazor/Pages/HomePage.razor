@@ -1,9 +1,16 @@
 ﻿@page "/"
 @page "/home"
+@using AspDigitalMemoSlip.Blazor.Models;
+@using Blazored.LocalStorage;
 @using DTOClassLibrary.DTO.Memo
 @using Microsoft.AspNetCore.Authorization
+@using System.Text.Json;
+@using System.Text;
+@using Microsoft.AspNetCore.WebUtilities;
 @inject HttpClient Http
 @inject NavigationManager navigationManager
+@inject ILocalStorageService localStorage
+
 @attribute [Authorize]
 
 <AuthorizeView>
@@ -86,6 +93,7 @@
 @code {
     private string memoUrl = "https://localhost:7001/api/Memo/";
     private List<MemoDTO> memos;
+    private UserInfo userInfo = new UserInfo();
 
     protected override async Task OnInitializedAsync()
     {
@@ -93,7 +101,10 @@
         {
             await Http.GetAsync($"{Http.BaseAddress}/notifications");
             memos = await Http.GetFromJsonAsync<List<MemoDTO>>(memoUrl);
-            Console.WriteLine(memos[0]);
+
+            await GetUserInfo();
+
+            memos = memos.Where(m => m.ConsigneeId == userInfo.Id).ToList();
         }
         catch (Exception e)
         {
@@ -101,6 +112,46 @@
         }
     }
 
+    private async Task GetUserInfo()
+    {
+        var token = await localStorage.GetItemAsync<string>("authToken");
+        if (!string.IsNullOrEmpty(token))
+        {
+            var claims = ExtractClaimsFromToken(token);
+            if (claims != null)
+            {
+                FillUserInfoFromClaims(claims);
+            }
+        }
+    }
+
+    private Dictionary<string, object> ExtractClaimsFromToken(string token)
+    {
+        var parts = token.Split('.');
+        if (parts.Length == 3)
+        {
+            var payload = parts[1];
+            var jsonPayload = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(payload));
+            return JsonSerializer.Deserialize<Dictionary<string, object>>(jsonPayload);
+        }
+        return null;
+    }
+
+    private void FillUserInfoFromClaims(Dictionary<string, object> claims)
+    {
+        userInfo.Id = claims["nameid"].ToString();
+        userInfo.Username = claims["unique_name"].ToString();
+        userInfo.Name = claims["name"].ToString();
+        userInfo.PhoneNumber = claims["phone_number"].ToString();
+        userInfo.VatNumber = claims["vat_number"].ToString();
+        userInfo.InsuranceNumber = claims["insurance_number"].ToString();
+        userInfo.InsuranceCoverage = claims["insurance_coverage"].ToString();
+        userInfo.IdExpireDate = claims.ContainsKey("id_expire_date") ? DateTime.Parse(claims["id_expire_date"].ToString()).ToString("dd-MM-yyyy") : null;
+        userInfo.IdNumber = claims["id_number"].ToString();
+        userInfo.IdWillExpire = claims.ContainsKey("id_will_expire") ? bool.Parse(claims["id_will_expire"].ToString()) : (bool?)null;
+        userInfo.MfaEnabled = claims.ContainsKey("mfa_enabled") ? bool.Parse(claims["mfa_enabled"].ToString()) : false;
+        userInfo.Role = claims["role"].ToString();
+    }
     private string GetDaysAgo(DateTime createDate)
     {
         TimeSpan timeDifference = DateTime.Now - createDate;

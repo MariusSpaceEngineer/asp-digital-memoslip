@@ -16,7 +16,7 @@ namespace AspDigitalMemoSlip.Domain
 
         public int SalesConfirmationId { get; set; }
         public SalesConfirmation SalesConfirmation { get; set; }
-
+        public int LotNumber { get; set; }
         public int CaratsSold { get; set; }
         public double SalePrice { get; set; }
         public DateTime SaleDate { get; set; }

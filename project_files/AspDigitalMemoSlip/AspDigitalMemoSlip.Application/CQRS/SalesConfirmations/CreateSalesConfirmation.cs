@@ -85,7 +85,7 @@ namespace AspDigitalMemoSlip.Application.Commands
                     ProductId = productSale.ProductId,
                     SalePrice = productSale.SalePrice,
                     SalesConfirmationId = salesConfirmation.Id,
-                    AgreementStates = AgreementState.SuggestedPrice
+                    AgreementStates = AgreementState.SuggestedPrice,
                 };
 
                 await uow.ProductSaleRepository.Create(newProductSale);
