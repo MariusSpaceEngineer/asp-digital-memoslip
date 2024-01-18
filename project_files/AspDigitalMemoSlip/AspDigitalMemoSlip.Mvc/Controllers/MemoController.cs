@@ -241,6 +241,9 @@ namespace AspDigitalMemoSlip.Mvc.Controllers
                 }
 
 
+                // Set TempData message after successful creation
+                TempData["SuccessMessage"] = "Memo created successfully!";
+
 
                 return RedirectToAction("Index", "Home");
             }

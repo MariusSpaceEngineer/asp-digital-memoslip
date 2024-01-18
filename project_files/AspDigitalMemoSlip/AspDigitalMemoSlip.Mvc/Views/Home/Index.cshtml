@@ -9,6 +9,13 @@
 <div class="text-center">
     <h1 class="display-4" style="margin-bottom:4rem;">Welcome</h1>
 
+        @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
     @if (Context.Request.Cookies["authToken"] != null)
     {
 
