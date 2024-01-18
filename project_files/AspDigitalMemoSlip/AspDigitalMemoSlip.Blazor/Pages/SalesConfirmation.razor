@@ -1,10 +1,12 @@
 ﻿@page "/salesconfirmation"
 @inject HttpClient Http
+@inject NavigationManager _navigationManager
+
 @using DTOClassLibrary.DTO
 @using DTOClassLibrary.DTO.ProductSale;
 @using DTOClassLibrary.DTO.SalesConfirmation;
 @using DTOClassLibrary.Enums;
-@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Authorization;
 @attribute [Authorize]
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
@@ -130,25 +132,41 @@
                                                     <strong>Product Price:</strong> $@product.SalePrice.ToString("0.00") |
                                                     <strong>Carats Sold:</strong> @product.CaratsSold
                                                 </span>
-                                                @if (product.AgreementStates == AgreementState.CounterPrice && item.SalesConfirmationState != SalesConfirmationState.CONFIRMCONSIGNER)
-                                                {
-                                                    @if (!product.isEditing)
-                                                    {
-                                                        <button class="btn btn-outline-primary btn-sm" @onclick="() => ToggleEditState(product)">Edit Price</button>
-                                                    }
-                                                    else
-                                                    {
-                                                        <input type="number" class="form-control edit-input" @bind="@product.NewPrice" placeholder="Enter new price">
-                                                        <button class="btn btn-primary btn-sm" @onclick="() => ConfirmPriceChange(product, product.NewPrice)">Confirm</button>
-                                                    }
-                                                }
+                                                        @if (product.AgreementStates == AgreementState.CounterPrice &&
+                                                       item.SalesConfirmationState != SalesConfirmationState.CONFIRMCONSIGNER &&
+                                                       item.SalesConfirmationState != SalesConfirmationState.APPROVED) 
+                                                        {
+                                                            if (!product.isEditing)
+                                                            {
+                                                                <button class="btn btn-outline-primary btn-sm" @onclick="() => ToggleEditState(product)">Edit Price</button>
+                                                            }
+                                                            else
+                                                            {
+                                                                <input type="number" class="form-control edit-input" @bind="product.NewPrice" placeholder="Enter new price">
+                                                                <button class="btn btn-primary btn-sm" @onclick="() => ConfirmPriceChange(product, product.NewPrice)">Confirm</button>
+                                                            }
+                                                        }
+
+                                                
+
                                                 @if (product.AgreementStates == AgreementState.Agreed)
                                                 {
-                                                    <span class="badge bg-success custom-badge"><i class="fas fa-check"></i> Agreed</span>
+                                                            <span class="badge bg-success custom-badge"><i class="fas fa-check"></i> Agreed</span>
                                                 }
-                                                @if (product.AgreementStates == AgreementState.SuggestedPrice)
+                                                 else if (product.Edited)
+                                                 {
+                                                 <span class="badge bg-primary custom-badge"><i class="fas fa-check"></i> Sent for approval</span>
+                                                 }
+                                                else if (item.SalesConfirmationState == SalesConfirmationState.APPROVED){
+                                                   <span class="badge bg-primary custom-badge"><i class="fas fa-check"></i>Agreed</span>
+                                                }
+                                                else if (product.AgreementStates == AgreementState.SuggestedPrice && item.SalesConfirmationState != SalesConfirmationState.EDITEDBYCONSIGNER)
                                                 {
                                                     <span class="badge bg-primary custom-badge"><i class="fas fa-check"></i> Sent for approval</span>
+                                                }
+                                                else if (item.SalesConfirmationState == SalesConfirmationState.EDITEDBYCONSIGNER && product.AgreementStates == AgreementState.SuggestedPrice)
+                                                {
+                                                    <span class="badge bg-primary custom-badge"><i class="fas fa-check"></i>Agreed</span>
                                                 }
                                             </li>
                                         }
@@ -234,6 +252,9 @@
             {
                 Console.WriteLine("fout");
             }
+
+            StateHasChanged();
+
         }
     }
 
@@ -254,6 +275,8 @@
             {
                 Console.WriteLine("fout");
             }
+
+            ReloadPage(_navigationManager);
         }
     }
     private void ToggleEditState(ProductSaleDTO product)
@@ -266,6 +289,12 @@
         product.SalePrice = newPrice;
         product.isEditing = false;
         product.AgreementStates = AgreementState.SuggestedPrice;
+        product.Edited = true;
         StateHasChanged();
+    }
+
+    public static void ReloadPage(NavigationManager manager)
+    {
+        manager.NavigateTo(manager.Uri, true);
     }
 }
