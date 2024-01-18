@@ -9,7 +9,7 @@
 </div>
 
 <div class="list-container">
-    @if (ViewBag.Consignees != null)
+    @if (ViewBag.Consignees.Count != 0)
     {
         @foreach (var consignee in ViewBag.Consignees)
         {
@@ -20,6 +20,10 @@
                 <p>Phone Number: @consignee.PhoneNumber</p>
             </div>
         }
+    }
+    @if (ViewBag.Consignees.Count == 0)
+    {
+        <p>No pending consignees, check back later!</p>
     }
 </div>
 

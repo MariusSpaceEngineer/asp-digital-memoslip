@@ -41,17 +41,8 @@ namespace AspDigitalMemoSlip.Mvc.Controllers
             string endpoint = "Consigner/GetAllPendingConsignees";
             List<ConsigneeDTO> consignees = await _client.GetFromJsonAsync<List<ConsigneeDTO>>(endpoint);
 
-            if (consignees != null && consignees.Count > 0)
-            {
-                ViewBag.Consignees = consignees;
-                return View("PendingConsignees", consignees);
-            }
-            else
-            {
-                // If the response is not successful, handle the error
-                ModelState.AddModelError("", "Failed to generate QR code.");
-                return View("Error");
-            }
+            ViewBag.Consignees = consignees;
+            return View("PendingConsignees", consignees);
         }
     }
 }
