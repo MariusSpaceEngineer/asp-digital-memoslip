@@ -16,6 +16,7 @@
 
 
 
+
 @code {
 
 
@@ -25,6 +26,13 @@
     private string userId;
     private string consigneeId;
 
+    private void ShowSuccessModal()
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("Content", "Memoslip succesfully accepted!");
+        parameters.Add("IsVisible", true);
+        Modal.Show<RegisterSuccesfulModal>("Memoslip Accepted", parameters);
+    }
 
     private string DisplayProducts(List<ProductDTO> products)
     {
@@ -126,6 +134,7 @@
                 else
                 {
                     await LoadMemos();
+                    ShowSuccessModal();
                 }
             }
             catch (Exception ex)
