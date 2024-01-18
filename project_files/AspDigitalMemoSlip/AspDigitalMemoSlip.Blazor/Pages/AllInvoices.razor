@@ -101,7 +101,7 @@ else
                 Console.WriteLine($"Error: {response.StatusCode}");
             }
 
-            var conversionRateResponse = await httpClient.GetAsync($"{Http.BaseAddress}/GetCurrentConversionRate");
+            var conversionRateResponse = await httpClient.GetAsync("https://localhost:7001/GetCurrentConversionRate");
 
             if (conversionRateResponse.IsSuccessStatusCode)
             {
