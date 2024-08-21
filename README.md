@@ -8,6 +8,12 @@ A platform designed for diamond consigners to work with their consignees.
 - Order diamonds as consignee from the consigner
 - Follow up the stock of diamonds per consigner
 
+## Technologies Used
+
+- Frontend: [Blazor & MVC]
+- Backend: [.Net Core API]
+- Database: [MySQL]
+
 ## Demo
 
 Check out this video demo of the project:
