@@ -1,24 +1,9 @@
-# ASP - Digital Memo Slip
+# Digital Memoslip Platform
 
-## Agile Planning
-- Work day: 8 hours
+A platform designed for diamond consigners to work with their consignees.
 
-- 1 sp = 1 hour
-- 2 sp = 2 hour
-- 3 sp = 4 hour
-- 5 sp = 1 day (8 hours)
-- 8 sp = 2 days (16 hours)
+## Features
 
-- Total story points per sprint = 80 sp
-
-## Guidelines
-- Consigner -> MVC
-- Consignee -> Blazor
-
-## Naming Convention:
-- Data Transfer Models: ...DTO
-- Controllers: All layers: ...Controller
-
-## Additional Guidelines:
-- No migration commits
-- All DTO's in a separate library instead of in layers
+- Create consignments
+- Order diamonds as consignee from the consigner
+- Follow up the stock of diamonds per consigner
